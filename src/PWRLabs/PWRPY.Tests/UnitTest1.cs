@@ -1,0 +1,30 @@
+using System.Text;
+using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Signer;
+
+namespace PWRPY.Tests;
+
+public class UnitTest1
+{
+    [Fact]
+    public void TestSignature()
+    {
+        var key = new EthECKey("ebf3a1c0654c8dd7700070b5a280d34d7ea3a1dc9d781dfc3af49443ffd1cc65");
+        
+        var s1 = Signer.SignMessage(key, "Hello!");
+        Assert.Equal("de956f8dc5b68e8195929e84c885f542a41cb635b3d2eb6dca92f1d983af70ef00f3250f7f012edf8d99ce6da4c03a4b06557b5df5e07bbd085260f4536a13ee1c", s1);
+        
+        var s2 = Signer.SignMessage(key, "Hello World!!");
+        Assert.Equal("34899d6189e03146312f1a330de7c588202b9f515ac09425aa345d4fc6fc86e11c9d6fe7ae128e7534d0b17b38e81f37a3f0e45880fb44758eb459a96a064b4a1b", s2);
+    }
+    
+    [Fact]
+    public async Task Test1()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "040928b5e48d6761b8ab2b657b5e7735f16cc5365c153c82a6016a4541f16ef9");
+        
+        var wallet2 = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var r = await wallet.TransferPwr(wallet2.PublicAddress, 100);
+        Assert.True(r.Success);
+    }
+}
