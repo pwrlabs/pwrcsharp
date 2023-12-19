@@ -7,7 +7,6 @@
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=aa440196_002D849d_002D4bcf_002Da0c0_002D622fd5b917ee/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.UnitTest1.Test1&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.UnitTest1.TestSignature&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.UnitTest1&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

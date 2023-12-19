@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json;
@@ -50,19 +51,21 @@ public class PwrApiSdk
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
-            
             var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                return new ApiResponse(false, "The response from the RPC node was empty.");
+
             var responseData = JsonConvert.DeserializeObject<ApiResponse>(responseString);
 
-            return new ApiResponse(response.IsSuccessStatusCode, responseData?.Message ?? string.Empty);
+            return new ApiResponse(response.IsSuccessStatusCode, responseData?.Message ?? "Success");
         }
         catch (Exception e)
         {
             return new ApiResponse(false, e.Message);
         }
     }
-    
+
     public async Task<ApiResponse<int>> GetNonceOfAddress(string address)
     {
         try
@@ -73,7 +76,7 @@ public class PwrApiSdk
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var responseData = JsonConvert.DeserializeObject<JObject>(responseContent);
-            
+
             var nonce = responseData["nonce"]?.Value<int>() ?? 0;
 
             return new ApiResponse<int>(true, "", nonce);
