@@ -1,4 +1,4 @@
-﻿namespace PWRPY;
+﻿namespace PWRPY.Models;
 
 public class WalletResponse
 {

@@ -3,26 +3,27 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Model;
 using Nethereum.Signer;
 using Nethereum.Util;
+using PWRPY.Models;
 
 namespace PWRPY;
 
 public class PwrWallet
 {
     private readonly PwrApiSdk _apiSdk;
-    
+
     private readonly EthECKey _ecKey;
 
     public PwrWallet(PwrApiSdk apiSdk) : this(apiSdk, EthECKey.GenerateKey().GetPrivateKeyAsBytes().ToHex())
     {
         _apiSdk = apiSdk;
     }
-    
+
     public PwrWallet(PwrApiSdk apiSdk, string privateKeyHex)
     {
         _apiSdk = apiSdk;
 
         _ecKey = new EthECKey(privateKeyHex);
-        
+
         PrivateKeyHex = _ecKey.GetPrivateKeyAsBytes().ToHex();
         PublicKeyHex = _ecKey.GetPubKey().ToHex();
 
@@ -34,10 +35,10 @@ public class PwrWallet
     public string PublicKeyHex { get; }
 
     public string PublicAddress { get; }
-    
-    private WalletResponse CreateWalletResponse(ApiResponse response, byte[] finalTxn)
+
+    private WalletResponse CreateWalletResponse<T>(ApiResponse<T> response, byte[]? finalTxn = null)
     {
-        if (response.Success)
+        if (response.Success && finalTxn != null)
         {
             var txnHash = new Sha3Keccack().CalculateHash(finalTxn).ToHex();
             return new WalletResponse(true, "0x" + txnHash);
@@ -47,7 +48,25 @@ public class PwrWallet
             return new WalletResponse(false, null, response.Message);
         }
     }
+
+    public async Task<int> GetNonce()
+    {
+        var response = await _apiSdk.GetNonceOfAddress(PublicAddress);
+        if (!response.Success)
+            throw new Exception(response.Message);
+
+        return response.Data;
+    }
     
+    public async Task<int> GetBalance()
+    {
+        var response = await _apiSdk.GetNonceOfAddress(PublicAddress);
+        if (!response.Success)
+            throw new Exception(response.Message);
+
+        return response.Data;
+    }
+
     public async Task<WalletResponse> TransferPwr(string to, int amount, int? nonce = null)
     {
         if (!nonce.HasValue)
@@ -83,5 +102,4 @@ public class PwrWallet
         var response = await _apiSdk.BroadcastTxn(finalTxn);
         return CreateWalletResponse(response, finalTxn);
     }
-    
 }
