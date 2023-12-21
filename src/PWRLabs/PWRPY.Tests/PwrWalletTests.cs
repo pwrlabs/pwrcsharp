@@ -38,6 +38,70 @@ public class PwrSdkTests
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetTotalValidatorsCount();
         Assert.True(r.Data > 0);
+    }    
+    
+    [Fact]
+    public async Task TestGetStandbyValidatorsCount()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetStandbyValidatorsCount();
+        Assert.True(r.Data == 0);
+    }    
+    
+    [Fact]
+    public async Task TestGetActiveValidatorsCount()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetActiveValidatorsCount();
+        Assert.True(r.Data == 2);
+    }    
+    
+    [Fact]
+    public async Task TestGetAllValidators()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetAllValidators();
+        Assert.True(r.Any());
+    }    
+    
+    [Fact]
+    public async Task TestGetStandbyValidators()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetStandbyValidators();
+        Assert.True(r.Any());
+    }   
+    
+    [Fact]
+    public async Task TestGetActiveValidators()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetActiveValidators();
+        Assert.True(r.Any());
+    }  
+    
+    [Fact]
+    public async Task TestGetOwnerOfVm()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetOwnerOfVm(0);
+        Assert.True(!string.IsNullOrWhiteSpace(r));
+    }    
+    
+    [Fact]
+    public async Task TestUpdateFeePerByte()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.UpdateFeePerByte();
+        Assert.True(r > 0);
+    }    
+    
+    [Fact]
+    public async Task TestGetLatestBlockNumber()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetLatestBlockNumber();
+        Assert.True(r.Success);
     }
 }
 

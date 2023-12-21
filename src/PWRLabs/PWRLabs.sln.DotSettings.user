@@ -10,5 +10,13 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=aa440196_002D849d_002D4bcf_002Da0c0_002D622fd5b917ee/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Test1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetTotalValidatorsCount&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetStandbyValidatorsCount&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetActiveValidatorsCount&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetAllValidators&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetStandbyValidators&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetActiveValidators&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetOwnerOfVm&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestUpdateFeePerByte&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetLatestBlockNumber&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

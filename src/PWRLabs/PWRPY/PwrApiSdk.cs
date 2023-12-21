@@ -198,4 +198,245 @@ public class PwrApiSdk
             return new ApiResponse<int>(false, e.Message);
         }
     }
+    
+    public async Task<ApiResponse<int>> GetStandbyValidatorsCount()
+    {
+        try
+        {
+            var url = $"{_rpcNodeUrl}/standbyValidatorsCount/";
+
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                return new ApiResponse<int>(false, errorMessage ?? "Unknown error");
+            }
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var validatorsCount = responseData["validatorsCount"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node");
+
+            return new ApiResponse<int>(true, responseData["message"]?.ToString() ?? "Success", validatorsCount);
+        }
+        catch (Exception e)
+        {
+            return new ApiResponse<int>(false, e.Message);
+        }
+    }
+    
+    public async Task<ApiResponse<int>> GetActiveValidatorsCount()
+    {
+        try
+        {
+            var url = $"{_rpcNodeUrl}/activeValidatorsCount/";
+
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                return new ApiResponse<int>(false, errorMessage ?? "Unknown error");
+            }
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var validatorsCount = responseData["validatorsCount"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node");
+
+            return new ApiResponse<int>(true, responseData["message"]?.ToString() ?? "Success", validatorsCount);
+        }
+        catch (Exception e)
+        {
+            return new ApiResponse<int>(false, e.Message);
+        }
+    }
+    
+    public async Task<List<Validator>> GetAllValidators()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync(_rpcNodeUrl + "/allValidators/");
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var data = JsonConvert.DeserializeObject<JObject>(responseString);
+                var validators = data["validators"].ToObject<List<JObject>>();
+                var validatorsList = new List<Validator>();
+
+                foreach (var validatorData in validators)
+                {
+                    var validator = new Validator(
+                        "0x" + validatorData["address"],
+                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
+                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
+                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
+                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
+                        validatorData["status"]?.ToString() ?? throw new Exception("Invalid response from RPC node, status is null"),
+                        _httpClient
+                    );
+                    validatorsList.Add(validator);
+                }
+
+                return validatorsList;
+            }
+            else
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to get all validators: {e.Message}");
+        }
+    }
+    
+    public async Task<List<Validator>> GetStandbyValidators()
+    {
+        try
+        {
+            var url = _rpcNodeUrl + "/standbyValidators/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var data = JsonConvert.DeserializeObject<JObject>(responseString);
+                var validators = data["validators"].ToObject<List<JObject>>();
+                var validatorsList = new List<Validator>();
+
+                foreach (var validatorData in validators)
+                {
+                    var validator = new Validator(
+                        "0x" + validatorData["address"] ?? throw new Exception("Invalid response from RPC node, address is null"),
+                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
+                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
+                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
+                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
+                        validatorData["status"]?.ToString() ?? throw new Exception("Invalid response from RPC node, status is null"),
+                        _httpClient
+                    );
+                    validatorsList.Add(validator);
+                }
+
+                return validatorsList;
+            }
+            else
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to get standby validators: {e.Message}");
+        }
+    }
+    
+    public async Task<List<Validator>> GetActiveValidators()
+    {
+        try
+        {
+            var url = _rpcNodeUrl + "/activeValidators/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var data = JsonConvert.DeserializeObject<JObject>(responseString);
+                var validators = data["validators"].ToObject<List<JObject>>();
+                var validatorsList = new List<Validator>();
+
+                foreach (var validatorData in validators)
+                {
+                    var validator = new Validator(
+                        "0x" + validatorData["address"] ?? throw new Exception("Invalid response from RPC node, address is null"),
+                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
+                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
+                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
+                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
+                        string.Empty,
+                        _httpClient
+                    );
+                    validatorsList.Add(validator);
+                }
+
+                return validatorsList;
+            }
+            else
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to get standby validators: {e.Message}");
+        }
+    }
+    
+    public async Task<string> GetOwnerOfVm(int vmId)
+    {
+        try
+        {
+            var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var data = JsonConvert.DeserializeObject<JObject>(responseString);
+                return data["owner"]?.ToString() ?? throw new Exception("Invalid response from RPC node, owner is null");
+            }
+            else
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to get owner of VM: {e.Message}");
+        }
+    }
+    
+    public async Task<int> UpdateFeePerByte()
+    {
+        try
+        {
+            var url = $"{_rpcNodeUrl}/feePerByte/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var data = JsonConvert.DeserializeObject<JObject>(responseString);
+                FeePerByte = data["feePerByte"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node");
+                return FeePerByte;
+            }
+            else
+            {
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Failed to update fee per byte: {e.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<int>> GetLatestBlockNumber()
+    {
+        var response = await GetBlocksCount();
+        if (!response.Success)
+            return new ApiResponse<int>(false, response.Message);
+
+        return new ApiResponse<int>(true, "Success", response.Data - 1);
+    }
+
 }
