@@ -135,5 +135,45 @@ public class PwrWalletTests
         var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
         var nonce = await wallet.GetNonce();
         Assert.Equal(0, nonce);
+    }  
+    
+    [Fact]
+    public async Task TestGetBalance()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var nonce = await wallet.GetBalance();
+        Assert.Equal(0, nonce);
+    }    
+    
+    [Fact]
+    public async Task TestSendVmDataTxn()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var r = await wallet.SendVmDataTxn(0, new byte[]{ 1, 2,3});
+        Assert.True(r.Success);
+    }   
+    
+    [Fact]
+    public async Task TestDelegate()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var r = await wallet.Delegate(wallet.PublicAddress, 10);
+        Assert.True(r.Success);
+    }    
+    
+    [Fact]
+    public async Task TestWithdraw()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var r = await wallet.Withdraw(wallet.PublicAddress, 10);
+        Assert.True(r.Success);
+    }
+    
+    [Fact]
+    public async Task TestClaimVmId()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var r = await wallet.ClaimVmId(0);
+        Assert.True(r.Success);
     }
 }

@@ -18,5 +18,10 @@
     &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetOwnerOfVm&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestUpdateFeePerByte&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrSdkTests.TestGetLatestBlockNumber&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrWalletTests.TestGetBalance&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrWalletTests.TestSendVmDataTxn&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrWalletTests.TestDelegate&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrWalletTests.TestWithdraw&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::9B80AACB-2D91-40A8-90A5-CB07EE8E209F::net7.0::PWRPY.Tests.PwrWalletTests.TestClaimVmId&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
