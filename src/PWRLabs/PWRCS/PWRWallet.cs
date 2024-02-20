@@ -3,9 +3,9 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Model;
 using Nethereum.Signer;
 using Nethereum.Util;
-using PWRPY.Models;
+using PWRCS.Models;
 
-namespace PWRPY;
+namespace PWRCS;
 
 public class PwrWallet
 {

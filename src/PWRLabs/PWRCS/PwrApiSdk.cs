@@ -4,9 +4,9 @@ using System.Text.Json;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PWRPY.Models;
+using PWRCS.Models;
 
-namespace PWRPY;
+namespace PWRCS;
 
 public class PwrApiSdk
 {

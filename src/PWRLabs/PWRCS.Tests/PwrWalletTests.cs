@@ -2,7 +2,7 @@ using System.Text;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 
-namespace PWRPY.Tests;
+namespace PWRCS.Tests;
 
 public class PwrSdkTests
 {

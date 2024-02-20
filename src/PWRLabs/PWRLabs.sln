@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PWRPY", "PWRPY\PWRPY.csproj", "{3CBFA40A-8F3F-4BCF-8DFF-EF82F0605EC3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PWRCS", "PWRCS\PWRCS.csproj", "{3CBFA40A-8F3F-4BCF-8DFF-EF82F0605EC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PWRPY.Tests", "PWRPY.Tests\PWRPY.Tests.csproj", "{9B80AACB-2D91-40A8-90A5-CB07EE8E209F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PWRCS.Tests", "PWRCS.Tests\PWRCS.Tests.csproj", "{9B80AACB-2D91-40A8-90A5-CB07EE8E209F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

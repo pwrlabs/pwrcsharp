@@ -1,4 +1,4 @@
-﻿namespace PWRPY;
+﻿namespace PWRCS;
 
 public static class Extensions
 {

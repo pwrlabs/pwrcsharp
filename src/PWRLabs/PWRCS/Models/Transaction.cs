@@ -1,4 +1,4 @@
-﻿namespace PWRPY.Models;
+﻿namespace PWRCS.Models;
 
 public class Transaction
 {

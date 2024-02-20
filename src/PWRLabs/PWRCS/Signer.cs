@@ -3,7 +3,7 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Util;
 
-namespace PWRPY;
+namespace PWRCS;
 
 public class Signer
 {
