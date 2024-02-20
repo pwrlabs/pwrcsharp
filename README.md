@@ -19,7 +19,7 @@ PWRCS is a C# library for interacting with the PWR network. It provides an easy 
 
 ### Installation
 
-PWRJ is available on Maven Central. Add this dependency to your `pom.xml`:
+PWRJ is available on Maven Central. Add this dependency to your `.csproj` file:
 
 ```xml
    <Project Sdk="Microsoft.NET.Sdk">
