@@ -6,6 +6,40 @@ namespace PWRCS.Tests;
 
 public class PwrSdkTests
 {
+
+    [Fact]
+    public async Task TestGetBlockChainVersion()
+    {
+        
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        short r = await sdk.GetBlockChainVersion();
+        Assert.Equal(0,r);
+    }
+
+
+     [Fact]
+    public async Task TestGetChainId()
+    {
+        
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetChainId();
+        Console.WriteLine("helo");
+        Assert.Equal(0, ((sbyte)r));
+    }
+
+
+    
+     [Fact]
+    public async Task  TestGetFeePerByte()
+    {
+        
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        long r = await sdk.GetFeePerByte();
+        Assert.Equal(100,r);
+    }
+
+   
+    
     [Fact]
     public async Task TestGetBalance()
     {

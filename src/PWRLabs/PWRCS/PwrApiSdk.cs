@@ -19,9 +19,83 @@ public class PwrApiSdk
         _httpClient = httpClient ?? new HttpClient();
     }
 
-    public int FeePerByte { get; private set; } = 100;
+    public long FeePerByte = 0;
     public string RpcNodeUrl => _rpcNodeUrl;
+    private byte ChainId = unchecked((byte)-1);
 
+
+
+    public async Task<byte> GetChainId(){
+        if(ChainId ==  unchecked((byte)-1)){
+           try
+        {
+            var url = $"{_rpcNodeUrl}/chainId/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+            ChainId = responseData["chainId"]?.Value<byte>() ?? unchecked((byte)-1);
+
+        }
+        catch (Exception e)
+        {
+            
+           throw new Exception($"Error retriving data {e.Message}" );
+        }
+        }
+        return ChainId;
+    }
+
+    public async Task<long> GetFeePerByte(){
+        if(FeePerByte == 0){
+  try
+        {
+            var url = $"{_rpcNodeUrl}/feePerByte/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+            FeePerByte = responseData["feePerByte"]?.Value<long>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+        }
+        return FeePerByte;
+    }
+
+    public async Task<short> GetBlockChainVersion(){
+        try
+        {
+            var url = $"{_rpcNodeUrl}/blockchainVersion/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["blockChainVersion"]?.Value<short>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
     public async Task<ApiResponse> BroadcastTxn(byte[] txn)
     {
         try
@@ -141,6 +215,7 @@ public class PwrApiSdk
                     submitter: jsonBlock.Value<string>("blockSubmitter"),
                     success: jsonBlock.Value<bool>("success"),
                     transactions: jsonBlock["transactions"].Select(t => new Transaction(
+                        blockNumber : t.Value<long>("blockNumber"),
                         size: t.Value<int>("size"),
                         hash: t.Value<string>("hash"),
                         fee: t.Value<decimal>("fee"),
@@ -148,7 +223,8 @@ public class PwrApiSdk
                         to: t.Value<string>("to"),
                         nonceOrValidationHash: t.Value<string>("nonceOrValidationHash"),
                         positionInTheBlock: t.Value<int>("positionInTheBlock"),
-                        type: t.Value<string>("type")
+                        type: t.Value<string>("type"),
+                        timestamp : DateTime.Now.Ticks
                     )).ToList()
                 );
 
@@ -404,7 +480,7 @@ public class PwrApiSdk
         }
     }
     
-    public async Task<int> UpdateFeePerByte()
+    public async Task<long> UpdateFeePerByte()
     {
         try
         {
@@ -439,4 +515,5 @@ public class PwrApiSdk
         return new ApiResponse<int>(true, "Success", response.Data - 1);
     }
 
+    
 }
