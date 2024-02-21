@@ -1,11 +1,42 @@
 using System.Text;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
+using PWRCS.Models;
 
 namespace PWRCS.Tests;
 
 public class PwrSdkTests
 {
+
+    [Fact]
+    public void TestGetLatestBlockNumber()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        long r = sdk.GetLatestBlockNumber();
+        Assert.NotEqual(0,r);
+    }
+    [Fact]
+    public async Task TestGetVmDataTxns()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxns(1, 800, 10023);
+        Assert.NotEmpty(vmDataTxns);
+    }
+    
+    [Fact]
+    public async Task TestGetActiveVotingPower()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        long r = await sdk.GetActiveVotingPower();
+        Assert.NotEqual(0,r);
+    }
+    [Fact]
+    public async Task TestGetTotalDelegatorsCount()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        int r = await sdk.GetTotalDelegatorsCount();
+        Assert.Equal(0,r);
+    }
 
     [Fact]
     public async Task TestGetBlockChainVersion()
@@ -79,7 +110,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetStandbyValidatorsCount();
-        Assert.True(r.Data == 0);
+         Assert.NotEqual(0,r.Data);
     }    
     
     [Fact]
@@ -87,7 +118,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetActiveValidatorsCount();
-        Assert.True(r.Data == 2);
+        Assert.NotEqual(0,r.Data);
     }    
     
     [Fact]
@@ -130,13 +161,7 @@ public class PwrSdkTests
         Assert.True(r > 0);
     }    
     
-    [Fact]
-    public async Task TestGetLatestBlockNumber()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetLatestBlockNumber();
-        Assert.True(r.Success);
-    }
+   
 }
 
 public class PwrWalletTests

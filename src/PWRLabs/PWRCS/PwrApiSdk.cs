@@ -23,8 +23,6 @@ public class PwrApiSdk
     public string RpcNodeUrl => _rpcNodeUrl;
     private byte ChainId = unchecked((byte)-1);
 
-
-
     public async Task<byte> GetChainId(){
         if(ChainId ==  unchecked((byte)-1)){
            try
@@ -49,7 +47,6 @@ public class PwrApiSdk
         }
         return ChainId;
     }
-
     public async Task<long> GetFeePerByte(){
         if(FeePerByte == 0){
   try
@@ -74,7 +71,6 @@ public class PwrApiSdk
         }
         return FeePerByte;
     }
-
     public async Task<short> GetBlockChainVersion(){
         try
         {
@@ -88,6 +84,241 @@ public class PwrApiSdk
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
            return responseData["blockChainVersion"]?.Value<short>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public long GetLatestBlockNumber(){
+       return GetBlocksCount().Result.Data -1;
+    }
+    public async Task<List<VmDataTxn>> GetVmDataTxns(long startingBlock, long endingBlock, long vmId){
+          
+            var url = $"{_rpcNodeUrl}getVmTransactions/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+            if (responseData["transactions"] == null)
+        {
+            throw new Exception("The response JSON does not contain 'transactions'.");
+        }
+            var vmDataTxns = responseData["transactions"].ToObject<List<JObject>>();
+            Console.WriteLine(vmDataTxns.Count);
+            var vmDataTxnList = new List<VmDataTxn>();
+
+                foreach (var vm in vmDataTxns)
+                {
+                   var vmDataTxn = new VmDataTxn(
+                    size : vm["size"].Value<int>() ,
+                    blockNumber : vm["blockNumber"].Value<long>() ,
+                    positionInTheBlock : vm["positionInTheBlock"].Value<int>() ,
+                    fee : vm["fee"].Value<long>() ,
+                    type : vm["type"].Value<string>() ,
+                    fromAddress : vm["sender"].Value<string>() ,
+                    to : vm["to"].Value<string>() ,
+                    nonce : vm["nonce"].Value<int>() ,
+                    hash : vm["hash"].Value<string>() ,
+                    timestamp : vm["timestamp"].Value<long>() ,
+                    vmId : vm["vmId"].Value<long>() ,
+                    data : vm["data"].Value<string>()
+
+                   );
+                    vmDataTxnList.Add(vmDataTxn);
+                }
+                return vmDataTxnList;
+
+        
+    }
+    public async Task<List<VmDataTxn>> GetVmDataTxnsFilterByPerBytePrefix(long startingBlock, long endingBlock, long vmId, byte[] prefix){
+          try
+        {
+            var url = $"{_rpcNodeUrl}/getVmTransactionsSortByBytePrefix/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var vmDataTxns = responseData["transactions"].ToObject<List<JObject>>();
+            var vmDataTxnList = new List<VmDataTxn>();
+
+                foreach (var vm in vmDataTxns)
+                {
+                   var vmDataTxn = new VmDataTxn(
+                     size : vm["size"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    blockNumber : vm["blockNumber"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    positionInTheBlock : vm["positionInTheBlock"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    fee : vm["fee"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    type : vm["type"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    fromAddress : vm["sender"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    to : vm["to"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    nonce : vm["nonce"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    hash : vm["hash"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    timestamp : vm["timeStamp"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    vmId : vm["vmId"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
+                    data : vm["data"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null")
+
+                   );
+                    vmDataTxnList.Add(vmDataTxn);
+                }
+                return vmDataTxnList;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<long> GetActiveVotingPower()  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["activeVotingPower"]?.Value<long>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public async Task<int> GetTotalDelegatorsCount()  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["totalDelegatorsCount"]?.Value<int>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<long> GetDelegatees()  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["activeVotingPower"]?.Value<long>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<Validator> GetValidator(string validatorAddress)  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return null;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<long> GetDelegatedPWR(String delegatorAddress, String validatorAddress)  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}validator/delegator/delegatedPWROfAddress/?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["delegatedPWR"]?.Value<long>() ?? 0;
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<decimal> GetShareValue(string validator)  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/validator/shareValue/?validatorAddress={validator}    ";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+           return responseData["shareValue"]?.Value<decimal>() ?? 0;
+
+
+        }
+        catch (Exception e)
+        {
+            
+          throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+    public  async Task<string> GetOwnerOfVm(long vmId)  {
+           try
+        {
+            var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+            return responseData["owner"]?.Value<string>() ?? "";
 
         }
         catch (Exception e)
@@ -119,7 +350,6 @@ public class PwrApiSdk
             return new ApiResponse(false, e.Message);
         }
     }
-
     public async Task<ApiResponse<int>> GetNonceOfAddress(string address)
     {
         try
@@ -142,7 +372,6 @@ public class PwrApiSdk
             return new ApiResponse<int>(false, e.Message);
         }
     }
-
     public async Task<ApiResponse<decimal>> GetBalanceOfAddress(string address)
     {
         try
@@ -218,10 +447,10 @@ public class PwrApiSdk
                         blockNumber : t.Value<long>("blockNumber"),
                         size: t.Value<int>("size"),
                         hash: t.Value<string>("hash"),
-                        fee: t.Value<decimal>("fee"),
+                        fee: t.Value<long>("fee"),
                         fromAddress: t.Value<string>("from"),
                         to: t.Value<string>("to"),
-                        nonceOrValidationHash: t.Value<string>("nonceOrValidationHash"),
+                        nonce: t.Value<int>("nonce"),
                         positionInTheBlock: t.Value<int>("positionInTheBlock"),
                         type: t.Value<string>("type"),
                         timestamp : DateTime.Now.Ticks
@@ -319,7 +548,7 @@ public class PwrApiSdk
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
             var validatorsCount = responseData["validatorsCount"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node");
 
-            return new ApiResponse<int>(true, responseData["message"]?.ToString() ?? "Success", validatorsCount);
+            return new ApiResponse<int>(true, responseData["validatorsCount"]?.ToString() ?? "Success", validatorsCount);
         }
         catch (Exception e)
         {
@@ -506,14 +735,7 @@ public class PwrApiSdk
         }
     }
 
-    public async Task<ApiResponse<int>> GetLatestBlockNumber()
-    {
-        var response = await GetBlocksCount();
-        if (!response.Success)
-            return new ApiResponse<int>(false, response.Message);
-
-        return new ApiResponse<int>(true, "Success", response.Data - 1);
-    }
+   
 
     
 }
