@@ -95,7 +95,7 @@ public class PwrApiSdk
     public long GetLatestBlockNumber(){
        return GetBlocksCount().Result.Data -1;
     }
-    public async Task<List<VmDataTxn>> GetVmDataTxns(long startingBlock, long endingBlock, long vmId){
+    public async Task<List<VmDataTxn>> GetVmDataTxns(ulong startingBlock, ulong endingBlock, ulong vmId){
           
             var url = $"{_rpcNodeUrl}getVmTransactions/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}";
             var response = await _httpClient.GetAsync(url);
@@ -110,29 +110,9 @@ public class PwrApiSdk
         {
             throw new Exception("The response JSON does not contain 'transactions'.");
         }
-            var vmDataTxns = responseData["transactions"].ToObject<List<JObject>>();
-            Console.WriteLine(vmDataTxns.Count);
-            var vmDataTxnList = new List<VmDataTxn>();
-
-                foreach (var vm in vmDataTxns)
-                {
-                   var vmDataTxn = new VmDataTxn(
-                    size : vm["size"].Value<int>() ,
-                    blockNumber : vm["blockNumber"].Value<long>() ,
-                    positionInTheBlock : vm["positionInTheBlock"].Value<int>() ,
-                    fee : vm["fee"].Value<long>() ,
-                    type : vm["type"].Value<string>() ,
-                    fromAddress : vm["sender"].Value<string>() ,
-                    to : vm["to"].Value<string>() ,
-                    nonce : vm["nonce"].Value<int>() ,
-                    hash : vm["hash"].Value<string>() ,
-                    timestamp : vm["timestamp"].Value<long>() ,
-                    vmId : vm["vmId"].Value<long>() ,
-                    data : vm["data"].Value<string>()
-
-                   );
-                    vmDataTxnList.Add(vmDataTxn);
-                }
+        var vmDataTxnsJson = responseData["transactions"].ToString();
+            var vmDataTxnList = JsonConvert.DeserializeObject<List<VmDataTxn>>(vmDataTxnsJson);
+            
                 return vmDataTxnList;
 
         
@@ -148,28 +128,8 @@ public class PwrApiSdk
                 throw new Exception("The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-            var vmDataTxns = responseData["transactions"].ToObject<List<JObject>>();
-            var vmDataTxnList = new List<VmDataTxn>();
-
-                foreach (var vm in vmDataTxns)
-                {
-                   var vmDataTxn = new VmDataTxn(
-                     size : vm["size"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    blockNumber : vm["blockNumber"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    positionInTheBlock : vm["positionInTheBlock"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    fee : vm["fee"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    type : vm["type"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    fromAddress : vm["sender"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    to : vm["to"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    nonce : vm["nonce"]?.Value<int>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    hash : vm["hash"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    timestamp : vm["timeStamp"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    vmId : vm["vmId"]?.Value<long>() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                    data : vm["data"]?.Value<string>() ?? throw new Exception("Invalid response from RPC node, ip is null")
-
-                   );
-                    vmDataTxnList.Add(vmDataTxn);
-                }
+            var vmDataTxnsJson = responseData["transactions"].ToString();
+            var vmDataTxnList = JsonConvert.DeserializeObject<List<VmDataTxn>>(vmDataTxnsJson);
                 return vmDataTxnList;
 
         }

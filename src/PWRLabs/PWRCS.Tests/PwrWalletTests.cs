@@ -22,6 +22,16 @@ public class PwrSdkTests
         List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxns(1, 800, 10023);
         Assert.NotEmpty(vmDataTxns);
     }
+
+     [Fact]
+    public async Task TestGetVmDataTxnsFilterByPerBytePrefix()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxnsFilterByPerBytePrefix(1, 800, 10023,new byte[] {1,7});
+        Assert.NotEmpty(vmDataTxns);
+    }
+
+    
     
     [Fact]
     public async Task TestGetActiveVotingPower()

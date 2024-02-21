@@ -5,13 +5,28 @@ namespace PWRCS.Models;
 
 public class Validator
 {
+    [JsonProperty("address")]
+
     public string Address { get; }
+    [JsonProperty("ip")]
+
     public string Ip { get; }
+    [JsonProperty("badActor")]
+
     public bool BadActor { get; }
+    [JsonProperty("votingPower")]
+
     public decimal VotingPower { get; }
+    [JsonProperty("shares")]
+
     public decimal Shares { get; }
+    [JsonProperty("delegatorsCount")]
+
     public int DelegatorsCount { get; }
+    [JsonProperty("status")]
+
     public string Status { get; }
+    
     private readonly HttpClient _httpClient;
 
     public Validator(string address, string ip, bool badActor, decimal votingPower, decimal shares, int delegatorsCount, string status, HttpClient httpClient)
