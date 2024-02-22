@@ -3,10 +3,10 @@ using PWRCS.Models;
 
 var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 try{
-        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxns(1, 10, 10023);
+        List<Validator> vmDataTxns = await sdk.GetAllValidators();
         
        foreach(var t in vmDataTxns){
-        Console.WriteLine(t.Hash);
+        Console.WriteLine(t.Address);
        }
 }catch(Exception e){
         Console.WriteLine(e.Message);

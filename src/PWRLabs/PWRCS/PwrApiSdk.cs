@@ -49,7 +49,7 @@ public class PwrApiSdk
     }
     public async Task<long> GetFeePerByte(){
         if(FeePerByte == 0){
-  try
+       try
         {
             var url = $"{_rpcNodeUrl}/feePerByte/";
             var response = await _httpClient.GetAsync(url);
@@ -122,6 +122,7 @@ public class PwrApiSdk
         {
             var url = $"{_rpcNodeUrl}/getVmTransactionsSortByBytePrefix/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
             var response = await _httpClient.GetAsync(url);
+            
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(responseString))
@@ -357,6 +358,29 @@ public class PwrApiSdk
         }
     }
 
+    public async Task<string> GetGuardianOfAddress(string address)
+    {
+          try
+        {
+            var url = $"{_rpcNodeUrl}/guardianOf/?userAddress={address}";
+            var response = await _httpClient.GetAsync(url);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                throw new Exception("The response from the RPC node was empty.");
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+
+            var isGuarded = responseData["isGuarded"]?.Value<bool>() ?? false; 
+
+           return responseData["guardian"]?.Value<string>() ?? ""; 
+        }
+        catch (Exception e)
+        {
+           throw new Exception($"Error retriving data {e.Message}" );
+        }
+    }
+
     public async Task<ApiResponse<int>> GetBlocksCount()
     {
         try
@@ -381,7 +405,13 @@ public class PwrApiSdk
             return new ApiResponse<int>(false, e.Message);
         }
     }
-
+    
+    /// <summary>
+/// Retrieves a block by its number from the blockchain.
+/// </summary>
+/// <param name="blockNumber">The block number to retrieve.</param>
+/// <returns>A <see cref="Task{Block}"/> representing the asynchronous operation, with a Block object containing block details if found.</returns>
+/// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
     public async Task<Block> GetBlockByNumber(int blockNumber)
     {
         try
@@ -525,26 +555,11 @@ public class PwrApiSdk
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                var data = JsonConvert.DeserializeObject<JObject>(responseString);
-                var validators = data["validators"].ToObject<List<JObject>>();
-                var validatorsList = new List<Validator>();
-
-                foreach (var validatorData in validators)
-                {
-                    var validator = new Validator(
-                        "0x" + validatorData["address"],
-                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
-                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
-                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
-                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
-                        validatorData["status"]?.ToString() ?? throw new Exception("Invalid response from RPC node, status is null"),
-                        _httpClient
-                    );
-                    validatorsList.Add(validator);
-                }
-
-                return validatorsList;
+                var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+                 var vmDataTxnsJson = responseData["validators"].ToString();
+                 var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
+            
+                return vmDataTxnList;
             }
             else
             {
@@ -568,26 +583,11 @@ public class PwrApiSdk
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                var data = JsonConvert.DeserializeObject<JObject>(responseString);
-                var validators = data["validators"].ToObject<List<JObject>>();
-                var validatorsList = new List<Validator>();
-
-                foreach (var validatorData in validators)
-                {
-                    var validator = new Validator(
-                        "0x" + validatorData["address"] ?? throw new Exception("Invalid response from RPC node, address is null"),
-                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
-                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
-                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
-                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
-                        validatorData["status"]?.ToString() ?? throw new Exception("Invalid response from RPC node, status is null"),
-                        _httpClient
-                    );
-                    validatorsList.Add(validator);
-                }
-
-                return validatorsList;
+                var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+                 var vmDataTxnsJson = responseData["validators"].ToString();
+                 var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
+            
+                return vmDataTxnList;
             }
             else
             {
@@ -611,26 +611,11 @@ public class PwrApiSdk
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                var data = JsonConvert.DeserializeObject<JObject>(responseString);
-                var validators = data["validators"].ToObject<List<JObject>>();
-                var validatorsList = new List<Validator>();
-
-                foreach (var validatorData in validators)
-                {
-                    var validator = new Validator(
-                        "0x" + validatorData["address"] ?? throw new Exception("Invalid response from RPC node, address is null"),
-                        validatorData["ip"]?.ToString() ?? throw new Exception("Invalid response from RPC node, ip is null"),
-                        validatorData["badActor"]?.ToObject<bool>() ?? throw new Exception("Invalid response from RPC node, badActor is null"),
-                        validatorData["votingPower"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, votingPower is null"),
-                        validatorData["totalShares"]?.ToObject<decimal>() ?? throw new Exception("Invalid response from RPC node, totalShares is null"),
-                        validatorData["delegatorsCount"]?.ToObject<int>() ?? throw new Exception("Invalid response from RPC node, delegatorsCount is null"),
-                        string.Empty,
-                        _httpClient
-                    );
-                    validatorsList.Add(validator);
-                }
-
-                return validatorsList;
+               var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+                 var vmDataTxnsJson = responseData["validators"].ToString();
+                 var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
+            
+                return vmDataTxnList;
             }
             else
             {
@@ -669,6 +654,12 @@ public class PwrApiSdk
         }
     }
     
+
+    /// <summary>
+/// Updates the fee per byte on the blockchain.
+/// </summary>
+/// <returns>A <see cref="Task{long}"/> representing the asynchronous operation, with the new fee per byte value.</returns>
+/// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
     public async Task<long> UpdateFeePerByte()
     {
         try

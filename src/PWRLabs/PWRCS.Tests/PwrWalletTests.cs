@@ -19,7 +19,7 @@ public class PwrSdkTests
     public async Task TestGetVmDataTxns()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxns(1, 800, 10023);
+        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxns(1, 13, 10023);
         Assert.NotEmpty(vmDataTxns);
     }
 
@@ -136,7 +136,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetAllValidators();
-        Assert.True(r.Any());
+        Assert.NotEmpty(r);
     }    
     
     [Fact]
@@ -169,8 +169,51 @@ public class PwrSdkTests
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.UpdateFeePerByte();
         Assert.True(r > 0);
-    }    
+    } 
+
+    [Fact]
+    public async Task TestGetNonceOfAddress()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetNonceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(r.Data >= 0);
+
+
+    }       
     
+    [Fact]
+    public async Task TestGetBalanceOfAddress()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetBalanceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(r.Data >= 0);
+    }  
+
+    [Fact]
+    public async Task TestGetGuardianOfAddress()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetGuardianOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.NotEqual(" ",r);
+    }  
+
+    [Fact]
+    public async Task TestGetDelegatedPWR()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetDelegatedPWR("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770","0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(r >= 0);
+    }  
+
+    [Fact]
+    public async Task TestGetShareValue()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetShareValue("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(r >= 0);    
+    }  
+      
+   
    
 }
 

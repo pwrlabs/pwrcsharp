@@ -26,10 +26,13 @@ public class Validator
     [JsonProperty("status")]
 
     public string Status { get; }
+
+    [JsonProperty("delegators")]
+    public List<Delegator> Delegators {get;}
     
     private readonly HttpClient _httpClient;
 
-    public Validator(string address, string ip, bool badActor, decimal votingPower, decimal shares, int delegatorsCount, string status, HttpClient httpClient)
+    public Validator(string address, string ip, bool badActor, decimal votingPower, decimal shares, int delegatorsCount, string status,List<Delegator> delegators, HttpClient httpClient)
     {
         Address = address;
         Ip = ip;
@@ -38,6 +41,7 @@ public class Validator
         Shares = shares;
         DelegatorsCount = delegatorsCount;
         Status = status;
+        Delegators = delegators;
         _httpClient = httpClient;
     }
 
