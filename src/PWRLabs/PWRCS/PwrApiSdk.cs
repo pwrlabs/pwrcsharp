@@ -23,28 +23,57 @@ public class PwrApiSdk
     public string RpcNodeUrl => _rpcNodeUrl;
     private byte ChainId = unchecked((byte)-1);
 
+     public async Task<string> Request(string url)
+    {
+       
+        try
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new Exception("Data not found.");
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    throw new Exception($"Unauthorized access for : {url}");
+                }
+                else if (response.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception($"Internal Server Error. Status code: {response.StatusCode}");
+                }
+                else
+                {
+                    throw new Exception($"Failed to fetch data from API. Status code: {response.StatusCode}");
+                }
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new Exception("Error fetching data from API.", ex);
+        }
+    }
+
+    public async Task<string> TestRequest(string url){
+    return await Request(url);
+    }
+
     public async Task<byte> GetChainId(){
         if(ChainId ==  unchecked((byte)-1)){
-           try
-        {
-            var url = $"{_rpcNodeUrl}/chainId/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            string url = $"{_rpcNodeUrl}/chainId/";
+            string responseString = await Request(url);
 
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
             ChainId = responseData["chainId"]?.Value<byte>() ?? unchecked((byte)-1);
-
         }
-        catch (Exception e)
-        {
-            
-           throw new Exception($"Error retriving data {e.Message}" );
-        }
-        }
+       
         return ChainId;
     }
     public async Task<long> GetFeePerByte(){

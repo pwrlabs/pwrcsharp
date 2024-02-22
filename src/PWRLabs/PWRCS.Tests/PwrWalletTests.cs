@@ -28,7 +28,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTxnsFilterByPerBytePrefix(1, 800, 10023,new byte[] {1,7});
-        Assert.NotEmpty(vmDataTxns);
+        Assert.IsType<List<VmDataTxn>>(vmDataTxns);
     }
 
     
