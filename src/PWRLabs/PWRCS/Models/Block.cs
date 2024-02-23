@@ -1,18 +1,30 @@
-﻿namespace PWRCS.Models;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+namespace PWRCS.Models;
 
 public class Block
 {
-    public int TransactionCount { get; }
-    public int Size { get; }
-    public int Number { get; }
-    public decimal Reward { get; }
-    public long Timestamp { get; }
+    [JsonProperty("transactionCount")]
+    public uint TransactionCount { get; }
+    [JsonProperty("blockSize")]
+    public uint Size { get; }
+    [JsonProperty("blockNumber")]
+    public ulong Number { get; }
+    [JsonProperty("blockReward")]
+    public ulong Reward { get; }
+    [JsonProperty("timestamp")]
+    public ulong Timestamp { get; }
+    [JsonProperty("blockHash")]
     public string Hash { get; }
+    [JsonProperty("blockSubmitter")]
     public string Submitter { get; }
+    [JsonProperty("success")]
     public bool Success { get; }
+    [JsonProperty("transactions")]    
+    [JsonConverter(typeof(TransactionConverter))]
     public List<Transaction> Transactions { get; }
 
-    public Block(int transactionCount, int size, int number, decimal reward, long timestamp, string hash, string submitter, bool success, List<Transaction> transactions)
+    public Block(uint transactionCount, uint size, uint number, ulong reward, ulong timestamp, string hash, string submitter, bool success, List<Transaction> transactions)
     {
         TransactionCount = transactionCount;
         Size = size;
@@ -24,4 +36,12 @@ public class Block
         Success = success;
         Transactions = transactions;
     }
+
+
+    public override string ToString()
+        {
+            string transactionsInfo = string.Join(Environment.NewLine, Transactions);
+            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}{transactionsInfo}";
+        }
+
 }

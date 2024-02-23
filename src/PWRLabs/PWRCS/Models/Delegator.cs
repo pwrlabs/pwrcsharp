@@ -5,13 +5,12 @@ namespace PWRCS.Models;
 public class Delegator
 {
 
-    [JsonProperty("address")]
     public string Address { get; }
-    [JsonProperty("validatorAddress")]
+   
     public string ValidatorAddress { get; }
-    [JsonProperty("shares")]
+
     public decimal Shares { get; }
-    [JsonProperty("delegatedPwr")]
+
     public decimal DelegatedPwr { get; }
       
 

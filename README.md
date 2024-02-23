@@ -1,6 +1,6 @@
 # PWRCS
 
-PWRCS is a C# library for interacting with the PWR network. It provides an easy interface for wallet management and sending transactions on PWR.
+PWRCS is a C# library for uinteracting with the PWR network. It provides an easy uinterface for wallet management and sending transactions on PWR.
 
 ## Features
 
@@ -9,7 +9,7 @@ PWRCS is a C# library for interacting with the PWR network. It provides an easy 
 - Build, sign and broadcast transactions
 - Transfer PWR tokens
 - Send data to PWR virtual machines
-- Interact with PWR nodes via RPC
+- uinteract with PWR nodes via RPC
 
 ## Getting Started
 
@@ -75,12 +75,12 @@ String address = wallet.getAddress();
 
 **Get wallet balance:**
 ```java
-long balance = wallet.getBalance();
+ulong balance = wallet.getBalance();
 ```
 
 **Get private key:**
 ```java
-BigInteger privateKey = wallet.getPrivateKey();
+Biguinteger privateKey = wallet.getPrivateKey();
 ```
 
 **Transfer PWR tokens:**
@@ -95,22 +95,22 @@ If the transaction was a success, you can retrieive the transaction hash, if it 
 Response r = wallet.transferPWR("recipientAddress", 1000); 
 
 if(r.isSuccess()) {
-   System.out.println("Transcation Hash: " + r.getMessage());
+   System.out.pruintln("Transcation Hash: " + r.getMessage());
 } else {
-   System.out.println("Error: " + r.getError());
+   System.out.pruintln("Error: " + r.getError());
 }
 ```
 
 **Send data to a VM:**
 ```java
-int vmId = 123;
+uint vmId = 123;
 byte[] data = ...;
 Response r = wallet.sendVmDataTxn(vmId, data);
 
 if(r.isSuccess()) {
-   System.out.println("Transcation Hash: " + r.getMessage());
+   System.out.pruintln("Transcation Hash: " + r.getMessage());
 } else {
-   System.out.println("Error: " + r.getError());
+   System.out.pruintln("Error: " + r.getError());
 }
 ```
 ### Other Static Calls
@@ -136,7 +136,7 @@ String url = PWRJ.getRpcNodeUrl();
 Gets the latest fee-per-byte rate.
 
 ```java
-long fee = PWRJ.getFeePerByte();
+ulong fee = PWRJ.getFeePerByte();
 ```
 
 **Get Balance Of Address:**
@@ -144,7 +144,7 @@ long fee = PWRJ.getFeePerByte();
 Gets the balance of a specific address.
 
 ```java
-long balance = PWRJ.getBalanceOfAddress("0x...");
+ulong balance = PWRJ.getBalanceOfAddress("0x...");
 ```
 
 **Get Nonce Of Address:**
@@ -152,7 +152,7 @@ long balance = PWRJ.getBalanceOfAddress("0x...");
 Gets the nonce/transaction count of a specific address.
 
 ```java
-int nonce = PWRJ.getNonceOfAddress("0x..."); 
+uint nonce = PWRJ.getNonceOfAddress("0x..."); 
 ```
 
 **Broadcast Txn:**

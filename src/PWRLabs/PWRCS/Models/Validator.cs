@@ -16,23 +16,21 @@ public class Validator
     public bool BadActor { get; }
     [JsonProperty("votingPower")]
 
-    public decimal VotingPower { get; }
+    public ulong VotingPower { get; }
     [JsonProperty("shares")]
 
-    public decimal Shares { get; }
+    public ulong Shares { get; }
     [JsonProperty("delegatorsCount")]
 
-    public int DelegatorsCount { get; }
+    public uint DelegatorsCount { get; }
     [JsonProperty("status")]
 
     public string Status { get; }
-
-    [JsonProperty("delegators")]
-    public List<Delegator> Delegators {get;}
+    public List<Delegator> Delegators {get;private set;}
     
     private readonly HttpClient _httpClient;
 
-    public Validator(string address, string ip, bool badActor, decimal votingPower, decimal shares, int delegatorsCount, string status,List<Delegator> delegators, HttpClient httpClient)
+      public Validator(string address, string ip, bool badActor, ulong votingPower, ulong shares, uint delegatorsCount, string status, HttpClient httpClient)
     {
         Address = address;
         Ip = ip;
@@ -41,9 +39,23 @@ public class Validator
         Shares = shares;
         DelegatorsCount = delegatorsCount;
         Status = status;
-        Delegators = delegators;
         _httpClient = httpClient;
     }
+
+    public void setDelegators(JObject delegators){
+         var delegatorList = new List<Delegator>();
+         foreach (var kvp in delegators)
+                {
+                    var delegatorAddress = "0x" + kvp.Key;
+                    var sharess = kvp.Value.Value<decimal>();
+                    var delegatedPwr = sharess * VotingPower;
+                    var delegator = new Delegator(delegatorAddress, Address, sharess, delegatedPwr);
+                    delegatorList.Add(delegator);
+                }
+        Delegators = delegatorList;
+    }
+
+    
 
     public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)
     {
