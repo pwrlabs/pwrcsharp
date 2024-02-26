@@ -34,28 +34,17 @@ public class PwrApiSdk
 
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadAsStringAsync();
+                var responseString = await response.Content.ReadAsStringAsync();
+                 if (string.IsNullOrWhiteSpace(responseString)) throw new Exception("The response from the RPC node was empty.");
+                return responseString;
             }
             else
             {
-                if (response.StatusCode == HttpStatusCode.NotFound)
-                {
-                    throw new Exception("Data not found.");
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new Exception($"Unauthorized access for : {url}");
-                }
-                else if (response.StatusCode == HttpStatusCode.InternalServerError)
-                {
-                    throw new Exception($"uinternal Server Error. Status code: {response.StatusCode}");
-                }
-                else
-                {
-                 /*    var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");*/
-                    throw new Exception($"Failed to fetch data from API. Status code: {response.StatusCode}");
-                }
+                var responseString = await response.Content.ReadAsStringAsync();
+                
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                var error = $"Error : {Environment.NewLine} Status Code : {response.StatusCode} {Environment.NewLine} Message : {errorMessage}";
+                throw new Exception(errorMessage ?? "Unknown error");          
             }
         }
         catch (HttpRequestException ex)
@@ -135,176 +124,88 @@ public class PwrApiSdk
         
     }
     public async Task<List<VmDataTxn>> GetVmDataTxnsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vmId, byte[] prefix){
-          try
-        {
+         
             var url = $"{_rpcNodeUrl}/getVmTransactionsSortByBytePrefix/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
             var response = await _httpClient.GetAsync(url);
             
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
-
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
             var vmDataTxnsJson = responseData["transactions"].ToString();
             var vmDataTxnList = JsonConvert.DeserializeObject<List<VmDataTxn>>(vmDataTxnsJson);
-                return vmDataTxnList;
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
+            return vmDataTxnList;
+       
     }
     public  async Task<ulong> GetActiveVotingPower()  {
-           try
-        {
+        
             var url = $"{_rpcNodeUrl}/activeVotingPower/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
            return responseData["activeVotingPower"]?.Value<ulong>() ?? 0;
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
     }
     public async Task<uint> GetTotalDelegatorsCount()  {
-           try
-        {
+         
             var url = $"{_rpcNodeUrl}/totalDelegatorsCount/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var response = await Request(url);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
 
            return responseData["totalDelegatorsCount"]?.Value<uint>() ?? 0;
 
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
+       
     }
     public  async Task<List<Validator>> GetDelegatees(string address)  {
         ValidateAddress(address);
-           try
-        {
             var url = $"{_rpcNodeUrl}/delegateesOfUser/?userAddress={address}";
             var response = await _httpClient.GetAsync(url);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
           return null;
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
     }
     public  async Task<Validator> GetValidator(string validatorAddress)  {
         ValidateAddress(validatorAddress);
-           try
-        {
+         
             var url = $"{_rpcNodeUrl}/activeVotingPower/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var response = await Request(url);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
 
            return null;
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
+        
     }
     public  async Task<ulong> GetDelegatedPWR(string delegatorAddress, string validatorAddress)  {
         ValidateAddress(delegatorAddress);
         ValidateAddress(validatorAddress);
-        try   
-        {
+       
             var url = $"{_rpcNodeUrl}validator/delegator/delegatedPWROfAddress/?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
             var responseString = await Request(url);
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
            return responseData["delegatedPWR"]?.Value<ulong>() ?? 0;
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
     }
     public  async Task<BigDecimal> GetShareValue(string validator)  {
         ValidateAddress(validator);
-           try
-        {
+         
             var url = $"{_rpcNodeUrl}/validator/shareValue/?validatorAddress={validator}";
             var response = await Request(url);
            
-
             var responseData = JsonConvert.DeserializeObject<JObject>(response);
             string value = responseData["shareValue"]?.Value<string>() ?? "";
-
            return BigDecimal.Parse(value);
-
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
+    
     }
     public  async Task<string> GetOwnerOfVm(ulong vmId)  {
-           try
-        {
+      
             var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
             var responseString = await Request(url);
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
             return responseData["owner"]?.Value<string>() ?? "";
-
-        }
-        catch (Exception e)
-        {
-            
-          throw new Exception($"Error retriving data {e.Message}" );
-        }
+    
     }
     public async Task<ApiResponse> BroadcastTxn(byte[] txn)
     {
@@ -316,9 +217,6 @@ public class PwrApiSdk
             
             var response = await _httpClient.PostAsync(url, content);
             var responseString = await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                return new ApiResponse(false, "The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<ApiResponse>(responseString);
 
@@ -380,25 +278,15 @@ public class PwrApiSdk
     public async Task<string> GetGuardianOfAddress(string address)
     {
         ValidateAddress(address);
-          try
-        {
-            var url = $"{_rpcNodeUrl}/guardianOf/?userAddress={address}";
+          var url = $"{_rpcNodeUrl}/guardianOf/?userAddress={address}";
             var response = await _httpClient.GetAsync(url);
             var responseString = await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseString))
-                throw new Exception("The response from the RPC node was empty.");
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
             var isGuarded = responseData["isGuarded"]?.Value<bool>() ?? false; 
 
-           return responseData["guardian"]?.Value<string>() ?? ""; 
-        }
-        catch (Exception e)
-        {
-           throw new Exception($"Error retriving data {e.Message}" );
-        }
+           return responseData["guardian"]?.Value<string>() ?? "";     
     }
     public async Task<ApiResponse<ulong>> GetBlocksCount()
     {
@@ -435,9 +323,11 @@ public class PwrApiSdk
     {
             var url = $"{_rpcNodeUrl}/block/?blockNumber={blockNumber}";
             var response = await Request(url);
-          /*   var jsonBlock = JsonConvert.DeserializeObject<JObject>(response);
+              var responseObject = JsonConvert.DeserializeObject<JObject>(response);
+            var json = responseObject["block"].ToString();
+            var jsonBlock = JsonConvert.DeserializeObject<JObject>(json);
             ulong timestamp = jsonBlock.Value<ulong>("timestamp");
-             var blockInstance = new Block(
+           var blockInstance = new Block(
                     transactionCount: jsonBlock.Value<uint>("transactionCount"),
                     size: jsonBlock.Value<uint>("blockSize"),
                     number: jsonBlock.Value<uint>("blockNumber"),
@@ -446,105 +336,64 @@ public class PwrApiSdk
                     hash: jsonBlock.Value<string>("blockHash"),
                     submitter: jsonBlock.Value<string>("blockSubmitter"),
                     success: jsonBlock.Value<bool>("success"),
-                    transactions: jsonBlock["transactions"].Select(t => new Transaction(
-                        blockNumber : t.Value<long>("blockNumber"),
+                    transactions : jsonBlock["transactions"].Select(t => new Transaction(
+                        blockNumber : t.Value<ulong>("blockNumber"),
                         size: t.Value<uint>("size"),
                         hash: t.Value<string>("hash"),
                         fee: t.Value<ulong>("fee"),
-                        fromAddress: t.Value<string>("from"),
-                        to: t.Value<string>("to"),
+                        fromAddress: t.Value<string>("sender"),
+                        to: t.Value<string>("receiver"),
                         nonce: t.Value<uint>("nonce"),
                         positionintheBlock: t.Value<uint>("positionInTheBlock"),
                         type: t.Value<string>("type"),
+                        value : t.Value<ulong>("value"),
                         timestamp : timestamp
                     )).ToList()
-                );*/
-
-                return null;
+                );
+                return blockInstance;
+          
     }
     public async Task<ApiResponse<uint>> GetTotalValidatorsCount()
     {
-        try
-        {
+     
             var url = $"{_rpcNodeUrl}/totalValidatorsCount/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                return new ApiResponse<uint>(false, errorMessage ?? "Unknown error");
-            }
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var response = await Request(url);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
             var validatorsCount = responseData["validatorsCount"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
 
             return new ApiResponse<uint>(true, "Success", validatorsCount);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<uint>(false, e.Message);
-        }
     }
-    public async Task<ApiResponse<uint>> GetStandbyValidatorsCount()
+    public async Task<uint> GetStandbyValidatorsCount()
     {
-        try
-        {
+       
             var url = $"{_rpcNodeUrl}/standbyValidatorsCount/";
 
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                return new ApiResponse<uint>(false, errorMessage ?? "Unknown error");
-            }
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
             var validatorsCount = responseData["validatorsCount"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
 
-            return new ApiResponse<uint>(true, responseData["message"]?.ToString() ?? "Success", validatorsCount);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<uint>(false, e.Message);
-        }
+            return validatorsCount;
     }
-    public async Task<ApiResponse<uint>> GetActiveValidatorsCount()
+    public async Task<uint> GetActiveValidatorsCount()
     {
-        try
-        {
+      
             var url = $"{_rpcNodeUrl}/activeValidatorsCount/";
 
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                return new ApiResponse<uint>(false, errorMessage ?? "Unknown error");
-            }
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var response = await Request(url);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
             var validatorsCount = responseData["validatorsCount"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
 
-            return new ApiResponse<uint>(true, responseData["validatorsCount"]?.ToString() ?? "Success", validatorsCount);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<uint>(false, e.Message);
-        }
+            return validatorsCount;
+       
     }
     public async Task<List<Validator>> GetAllValidators()
     {
-        try
-        {
+       
             var response = await _httpClient.GetAsync(_rpcNodeUrl + "/allValidators/");
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
+           
                 JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
                  var validatorsString = responseData["validators"].ToString();
                 JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
@@ -555,141 +404,122 @@ public class PwrApiSdk
                    
                    string address = token["address"].Value<string>();
                    
-                   ulong votingPower = token["votingPower"].Value<ulong>();
+                   ulong votingPower = token["votingPower"]?.Value<ulong>() ?? 0;
                    var val = new Validator(
                     address : address,
-                    ip : token["ip"].Value<string>(),
+                    ip : token["ip"]?.Value<string>() ?? "",
                     badActor : token["badActor"]?.Value<bool>() ?? false,
-                    votingPower : token["votingPower"].Value<ulong>(),
-                    shares : token["shares"]?.Value<ulong>() ?? 0,
-                    delegatorsCount : token["delegatorsCount"].Value<uint>(),
-                    status : token["status"].Value<string>(),
-                    httpClient : _httpClient,
-                    delegators : token["delegators"].Select(t => new Delegator(
+                    votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
+                    shares : token["totalShares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
+                    status : token["status"]?.Value<string>() ?? "active",
+                    httpClient : _httpClient
+                   /* delegators : token["delegators"].Select(t => new Delegator(
                         address :  "0x" + address,
                         validatorAddress : address,
-                        delegatedPwr : t["shares"].Value<ulong>() * votingPower,
-                        shares : t["shares"].Value<ulong>()
-                    )).ToList()
+                        delegatedPwr : t["totalShares"]?.Value<ulong>() ?? 0 * votingPower,
+                        shares : 0
+                    )).ToList()*/
                    );
                    validators.Add(val);
                  }
                    
                
                 return validators;
-            }
-            else
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to get all validators: {e.Message}");
-        }
+            
+          
     }
     public async Task<List<Validator>> GetStandbyValidators()
     {
-        try
-        {
+       
             var url = _rpcNodeUrl + "/standbyValidators/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+       
+                var responseData = JsonConvert.DeserializeObject<JObject>(response);
                  var validatorsString = responseData["validators"].ToString();
-                 var validatorsObject = JsonConvert.DeserializeObject<JObject>(validatorsString);
+                  JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
                  List<Validator> validators = new List<Validator>();
-                  foreach(var validator in validatorsObject){
+                 
+                 foreach(var token in validatorsArray){
                 
-                   JToken token = validator.Value;
+                   
                    string address = token["address"].Value<string>();
                    
-                   ulong votingPower = token["votingPower"].Value<ulong>();
+                   ulong votingPower = token["votingPower"]?.Value<ulong>() ?? 0;
                    var val = new Validator(
                     address : address,
-                    ip : token["ip"].Value<string>(),
+                    ip : token["ip"]?.Value<string>() ?? "",
                     badActor : token["badActor"]?.Value<bool>() ?? false,
-                    votingPower : token["votingPower"].Value<ulong>(),
-                    shares : token["shares"].Value<ulong>(),
-                    delegatorsCount : token["delegatorsCount"].Value<uint>(),
-                    status : token["status"].Value<string>(),
-                    httpClient : _httpClient,
-                    delegators : token["delegators"].Select(t => new Delegator(
+                    votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
+                    shares : token["totalShares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
+                    status : token["status"]?.Value<string>() ?? "active",
+                    httpClient : _httpClient
+                   /* delegators : token["delegators"].Select(t => new Delegator(
                         address :  "0x" + address,
                         validatorAddress : address,
-                        delegatedPwr : t["shares"].Value<ulong>() * votingPower,
-                        shares : t["shares"].Value<ulong>()
-                    )).ToList()
+                        delegatedPwr : t["totalShares"]?.Value<ulong>() ?? 0 * votingPower,
+                        shares : 0
+                    )).ToList()*/
                    );
                    validators.Add(val);
                  }
+                   
+               
                 return validators;
-            }
-            else
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to get standby validators: {e.Message}");
-        }
+           
     }
     public async Task<List<Validator>> GetActiveValidators()
     {
-        try
-        {
+        
             var url = _rpcNodeUrl + "/activeValidators/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-               var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-                 var vmDataTxnsJson = responseData["validators"].ToString();
-                 var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
-            
-                return vmDataTxnList;
-            }
-            else
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to get standby validators: {e.Message}");
-        }
+           
+               var responseData = JsonConvert.DeserializeObject<JObject>(response);
+                 var validatorsString = responseData["validators"].ToString();
+                JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
+                 List<Validator> validators = new List<Validator>();
+                 
+                 foreach(var token in validatorsArray){
+                
+                   
+                   string address = token["address"].Value<string>();
+                   
+                   ulong votingPower = token["votingPower"]?.Value<ulong>() ?? 0;
+                   var val = new Validator(
+                    address : address,
+                    ip : token["ip"]?.Value<string>() ?? "",
+                    badActor : token["badActor"]?.Value<bool>() ?? false,
+                    votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
+                    shares : token["totalShares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
+                    status : token["status"]?.Value<string>() ?? "active",
+                    httpClient : _httpClient
+                   /* delegators : token["delegators"].Select(t => new Delegator(
+                        address :  "0x" + address,
+                        validatorAddress : address,
+                        delegatedPwr : t["totalShares"]?.Value<ulong>() ?? 0 * votingPower,
+                        shares : 0
+                    )).ToList()*/
+                   );
+                   validators.Add(val);
+                 }
+                   
+               
+                return validators;
+           
     }
     public async Task<string> GetOwnerOfVm(uint vmId)
     {
-        try
-        {
+       
             var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var data = JsonConvert.DeserializeObject<JObject>(responseString);
-                return data["owner"]?.ToString() ?? throw new Exception("Invalid response from RPC node, owner is null");
-            }
-            else
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to get owner of VM: {e.Message}");
-        }
+            var response = await Request(url);
+            
+            var data = JsonConvert.DeserializeObject<JObject>(response);
+        return data["owner"]?.ToString() ?? throw new Exception("Invalid response from RPC node, owner is null");
+            
     }
 
     /// <summary>
@@ -700,11 +530,10 @@ public class PwrApiSdk
     public async Task UpdateFeePerByte()
     {
             var url = $"{_rpcNodeUrl}/feePerByte/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-                var data = JsonConvert.DeserializeObject<JObject>(responseString);
-                FeePerByte = data["feePerByte"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
+            var data = JsonConvert.DeserializeObject<JObject>(response);
+            FeePerByte = data["feePerByte"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
            
        
     }

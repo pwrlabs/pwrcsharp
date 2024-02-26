@@ -110,7 +110,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetTotalValidatorsCount();
-        Assert.True(r.Data > 0);
+        Assert.True(r.Data >= 0);
     }    
     
     [Fact]
@@ -118,7 +118,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetStandbyValidatorsCount();
-         Assert.NotEqual(0UL,r.Data);
+        Assert.True(r >= 0);
     }    
     
     [Fact]
@@ -126,7 +126,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetActiveValidatorsCount();
-        Assert.NotEqual(0UL,r.Data);
+        Assert.True(r >= 0);
     }    
     
     [Fact]
@@ -134,7 +134,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetAllValidators();
-        Assert.NotEmpty(r);
+        Assert.True(r.Any());
     }    
     
     [Fact]

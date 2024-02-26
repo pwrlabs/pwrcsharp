@@ -17,7 +17,7 @@ public class Validator
     [JsonProperty("votingPower")]
 
     public ulong VotingPower { get; }
-    [JsonProperty("shares")]
+    [JsonProperty("totalShares")]
 
     public ulong Shares { get; }
     [JsonProperty("delegatorsCount")]
@@ -65,7 +65,7 @@ public class Validator
         }
     
 
-    /*public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)
+    public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)
     {
         try
         {
@@ -81,7 +81,7 @@ public class Validator
                 foreach (var kvp in delegatorsData)
                 {
                     var delegatorAddress = "0x" + kvp.Key;
-                    var shares = kvp.Value.Value<decimal>();
+                    var shares = kvp.Value.Value<ulong>();
                     var delegatedPwr = shares * VotingPower;
                     var delegator = new Delegator(delegatorAddress, Address, shares, delegatedPwr);
                     delegatorsList.Add(delegator);
@@ -106,5 +106,5 @@ public class Validator
         {
             throw new Exception($"An error occurred: {err.Message}");
         }
-    }*/
+    }
 }

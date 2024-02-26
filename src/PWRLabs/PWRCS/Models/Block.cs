@@ -37,11 +37,26 @@ public class Block
         Transactions = transactions;
     }
 
+    public Block(uint transactionCount, uint size, uint number, ulong reward, ulong timestamp, string hash, string submitter, bool success)
+    {
+        TransactionCount = transactionCount;
+        Size = size;
+        Number = number;
+        Reward = reward;
+        Timestamp = timestamp;
+        Hash = hash;
+        Submitter = submitter;
+        Success = success;
+    }
 
- public override string ToString()
+    public override string ToString()
         {
+            string txnInfo = "";
+            foreach(Transaction tx in Transactions){
+                txnInfo += tx.ToString();
+            }
            
-            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}";
+            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}{txnInfo}";
         }
 
 

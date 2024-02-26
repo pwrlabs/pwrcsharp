@@ -108,8 +108,7 @@ public class PwrWallet
 
         return response.Data;
     }
-  
-    public byte[] GetSignedTxn(byte[] txn){
+      public byte[] GetSignedTxn(byte[] txn){
         if(txn == null) throw new ArgumentException("txn cannot be null");
 
         byte[] signature = Signer.SignMessage(_ecKey,txn);
@@ -202,23 +201,8 @@ public class PwrWallet
     public async Task<byte[]> GetDelegateTxn(string to, ulong amount, uint nonce)
     {
         ValidateAddress(to);
-        if (to.Length != 40 && to.Length != 42)
-        {
-            throw new ArgumentException("Invalid address");
-        }
-        if (amount < 0)
-        {
-            throw new ArgumentException("Amount cannot be negative");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-
-        if (to.Length == 42)
-        {
-            to = to.Substring(2);
-        }
+         to = to.Substring(2);
+       
 
         byte[] txnBase = await GetTxnBase(3, nonce);
         byte[] toBytes = Extensions.HexStringToByteArray(to);
