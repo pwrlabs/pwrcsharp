@@ -26,6 +26,9 @@ public class Validator
     [JsonProperty("status")]
 
     public string Status { get; }
+
+    [JsonProperty("delegators")]    
+    [JsonConverter(typeof(DelegatorConverter))]
     public List<Delegator> Delegators {get;private set;}
     
     private readonly HttpClient _httpClient;
@@ -42,22 +45,27 @@ public class Validator
         _httpClient = httpClient;
     }
 
-    public void setDelegators(JObject delegators){
-         var delegatorList = new List<Delegator>();
-         foreach (var kvp in delegators)
-                {
-                    var delegatorAddress = "0x" + kvp.Key;
-                    var sharess = kvp.Value.Value<decimal>();
-                    var delegatedPwr = sharess * VotingPower;
-                    var delegator = new Delegator(delegatorAddress, Address, sharess, delegatedPwr);
-                    delegatorList.Add(delegator);
-                }
-        Delegators = delegatorList;
+       public Validator(string address, string ip, bool badActor, ulong votingPower, ulong shares, uint delegatorsCount, string status,List<Delegator> delegators ,HttpClient httpClient)
+    {
+        Address = address;
+        Ip = ip;
+        BadActor = badActor;
+        VotingPower = votingPower;
+        Shares = shares;
+        DelegatorsCount = delegatorsCount;
+        Status = status;
+        Delegators = delegators;
+        _httpClient = httpClient;
     }
 
     
+ public override string ToString()
+        {
+            return $"Address: {Address}, IP: {Ip}, Bad Actor: {BadActor}, Voting Power: {VotingPower}, Shares: {Shares}, Delegators Count: {DelegatorsCount}, Status: {Status}";
+        }
+    
 
-    public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)
+    /*public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)
     {
         try
         {
@@ -78,7 +86,6 @@ public class Validator
                     var delegator = new Delegator(delegatorAddress, Address, shares, delegatedPwr);
                     delegatorsList.Add(delegator);
                 }
-
                 return delegatorsList;
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
@@ -99,5 +106,5 @@ public class Validator
         {
             throw new Exception($"An error occurred: {err.Message}");
         }
-    }
+    }*/
 }

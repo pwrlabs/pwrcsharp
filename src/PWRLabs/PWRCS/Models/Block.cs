@@ -38,10 +38,11 @@ public class Block
     }
 
 
-    public override string ToString()
+ public override string ToString()
         {
-            string transactionsInfo = string.Join(Environment.NewLine, Transactions);
-            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}{transactionsInfo}";
+           
+            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}";
         }
+
 
 }

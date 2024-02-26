@@ -10,9 +10,9 @@ public class Transaction
 
     [JsonProperty("blockNumber")]
     public ulong BlockNumber {get;}
-    [JsonProperty("positionuintheBlock")]
+    [JsonProperty("positionInTheBlock")]
 
-    public uint PositionuintheBlock { get; }
+    public uint PositionintheBlock { get; }
     [JsonProperty("fee")]
 
     public ulong Fee { get; }
@@ -38,13 +38,9 @@ public class Transaction
     [JsonProperty("timestamp")]
     public ulong TimeStamp {get;}
 
-    
-
-
-
     public Transaction(uint size,
     ulong blockNumber,
-     uint positionuintheBlock,
+     uint positionintheBlock,
       ulong fee,
        string type,
         string fromAddress,
@@ -57,7 +53,7 @@ public class Transaction
         
         Size = size;
         BlockNumber = blockNumber;
-        PositionuintheBlock = positionuintheBlock;
+        PositionintheBlock = positionintheBlock;
         Fee = fee;
         Type = type;
         FromAddress = fromAddress;
@@ -68,8 +64,12 @@ public class Transaction
         TimeStamp = timestamp;
     }
 
+    public Transaction()
+    {
+    }
+
     public override string ToString()
         {
-            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionuintheBlock={PositionuintheBlock}, Fee={Fee}, Type={Type}, FromAddress={FromAddress}, To={To}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}";
+            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionuintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, FromAddress={FromAddress}, To={To}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}";
         }
 }

@@ -52,6 +52,8 @@ public class PwrApiSdk
                 }
                 else
                 {
+                 /*    var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                throw new Exception(errorMessage ?? "Unknown error");*/
                     throw new Exception($"Failed to fetch data from API. Status code: {response.StatusCode}");
                 }
             }
@@ -111,7 +113,7 @@ public class PwrApiSdk
             
             JObject responseData = JsonConvert.DeserializeObject<JObject>(response);
 
-           return responseData["blockChainVersion"]?.Value<short>() ?? throw new Exception("Unexpected error Occured.");
+           return responseData["blockchainVersion"]?.Value<short>() ?? throw new Exception("Unexpected error Occured.");
 
        
     }
@@ -179,7 +181,7 @@ public class PwrApiSdk
     public async Task<uint> GetTotalDelegatorsCount()  {
            try
         {
-            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var url = $"{_rpcNodeUrl}/totalDelegatorsCount/";
             var response = await _httpClient.GetAsync(url);
             var responseString = await response.Content.ReadAsStringAsync();
 
@@ -197,10 +199,11 @@ public class PwrApiSdk
           throw new Exception($"Error retriving data {e.Message}" );
         }
     }
-    public  async Task<ulong> GetDelegatees()  {
+    public  async Task<List<Validator>> GetDelegatees(string address)  {
+        ValidateAddress(address);
            try
         {
-            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var url = $"{_rpcNodeUrl}/delegateesOfUser/?userAddress={address}";
             var response = await _httpClient.GetAsync(url);
             var responseString = await response.Content.ReadAsStringAsync();
 
@@ -209,7 +212,7 @@ public class PwrApiSdk
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
-           return responseData["activeVotingPower"]?.Value<ulong>() ?? 0;
+          return null;
 
         }
         catch (Exception e)
@@ -310,7 +313,7 @@ public class PwrApiSdk
             var url = $"{_rpcNodeUrl}/broadcast/";
             var payload = new { txn = txn.ToHex() };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-
+            
             var response = await _httpClient.PostAsync(url, content);
             var responseString = await response.Content.ReadAsStringAsync();
 
@@ -430,60 +433,34 @@ public class PwrApiSdk
 /// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
     public async Task<Block> GetBlockByNumber(uint blockNumber)
     {
-        try
-        {
             var url = $"{_rpcNodeUrl}/block/?blockNumber={blockNumber}";
-            var response = await _httpClient.GetAsync(url);
-
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var jsonBlock = JObject.Parse(responseString)["block"];
-
-                var blockInstance = new Block(
+            var response = await Request(url);
+          /*   var jsonBlock = JsonConvert.DeserializeObject<JObject>(response);
+            ulong timestamp = jsonBlock.Value<ulong>("timestamp");
+             var blockInstance = new Block(
                     transactionCount: jsonBlock.Value<uint>("transactionCount"),
                     size: jsonBlock.Value<uint>("blockSize"),
                     number: jsonBlock.Value<uint>("blockNumber"),
                     reward: jsonBlock.Value<ulong>("blockReward"),
-                    timestamp: jsonBlock.Value<ulong>("timestamp"),
+                    timestamp: timestamp,
                     hash: jsonBlock.Value<string>("blockHash"),
                     submitter: jsonBlock.Value<string>("blockSubmitter"),
                     success: jsonBlock.Value<bool>("success"),
                     transactions: jsonBlock["transactions"].Select(t => new Transaction(
-                        blockNumber : t.Value<ulong>("blockNumber"),
+                        blockNumber : t.Value<long>("blockNumber"),
                         size: t.Value<uint>("size"),
                         hash: t.Value<string>("hash"),
                         fee: t.Value<ulong>("fee"),
                         fromAddress: t.Value<string>("from"),
                         to: t.Value<string>("to"),
                         nonce: t.Value<uint>("nonce"),
-                        positionuintheBlock: t.Value<uint>("positionuintheBlock"),
+                        positionintheBlock: t.Value<uint>("positionInTheBlock"),
                         type: t.Value<string>("type"),
-                        value : t.Value<ulong>("value"),
-                        timestamp : (ulong)DateTime.Now.Ticks
+                        timestamp : timestamp
                     )).ToList()
-                );
+                );*/
 
-                return blockInstance;
-            }
-            else if (response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                var errorData = JObject.Parse(await response.Content.ReadAsStringAsync());
-                throw new Exception($"Failed with HTTP error 400 and message: {errorData["message"]}");
-            }
-            else
-            {
-                throw new Exception($"Failed with HTTP error code: {response.StatusCode}");
-            }
-        }
-        catch (HttpRequestException httpErr)
-        {
-            throw new Exception($"HTTP error occurred: {httpErr.Message}");
-        }
-        catch (Exception err)
-        {
-            throw new Exception($"An error occurred: {err.Message}");
-        }
+                return null;
     }
     public async Task<ApiResponse<uint>> GetTotalValidatorsCount()
     {
@@ -569,13 +546,37 @@ public class PwrApiSdk
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-                 var vmDataTxnsJson = responseData["transactions"].ToString();
-                 var listofdata = responseData["transactions"]; 
-                var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
-                foreach(var kvp in listofdata){
+                 var validatorsString = responseData["validators"].ToString();
+                JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
+                 List<Validator> validators = new List<Validator>();
+                 
+                 foreach(var token in validatorsArray){
+                
                    
-                }
-                return vmDataTxnList;
+                   string address = token["address"].Value<string>();
+                   
+                   ulong votingPower = token["votingPower"].Value<ulong>();
+                   var val = new Validator(
+                    address : address,
+                    ip : token["ip"].Value<string>(),
+                    badActor : token["badActor"]?.Value<bool>() ?? false,
+                    votingPower : token["votingPower"].Value<ulong>(),
+                    shares : token["shares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"].Value<uint>(),
+                    status : token["status"].Value<string>(),
+                    httpClient : _httpClient,
+                    delegators : token["delegators"].Select(t => new Delegator(
+                        address :  "0x" + address,
+                        validatorAddress : address,
+                        delegatedPwr : t["shares"].Value<ulong>() * votingPower,
+                        shares : t["shares"].Value<ulong>()
+                    )).ToList()
+                   );
+                   validators.Add(val);
+                 }
+                   
+               
+                return validators;
             }
             else
             {
@@ -599,10 +600,34 @@ public class PwrApiSdk
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-                 var vmDataTxnsJson = responseData["validators"].ToString();
-                 var vmDataTxnList = JsonConvert.DeserializeObject<List<Validator>>(vmDataTxnsJson);
-            
-                return vmDataTxnList;
+                 var validatorsString = responseData["validators"].ToString();
+                 var validatorsObject = JsonConvert.DeserializeObject<JObject>(validatorsString);
+                 List<Validator> validators = new List<Validator>();
+                  foreach(var validator in validatorsObject){
+                
+                   JToken token = validator.Value;
+                   string address = token["address"].Value<string>();
+                   
+                   ulong votingPower = token["votingPower"].Value<ulong>();
+                   var val = new Validator(
+                    address : address,
+                    ip : token["ip"].Value<string>(),
+                    badActor : token["badActor"]?.Value<bool>() ?? false,
+                    votingPower : token["votingPower"].Value<ulong>(),
+                    shares : token["shares"].Value<ulong>(),
+                    delegatorsCount : token["delegatorsCount"].Value<uint>(),
+                    status : token["status"].Value<string>(),
+                    httpClient : _httpClient,
+                    delegators : token["delegators"].Select(t => new Delegator(
+                        address :  "0x" + address,
+                        validatorAddress : address,
+                        delegatedPwr : t["shares"].Value<ulong>() * votingPower,
+                        shares : t["shares"].Value<ulong>()
+                    )).ToList()
+                   );
+                   validators.Add(val);
+                 }
+                return validators;
             }
             else
             {
@@ -672,30 +697,16 @@ public class PwrApiSdk
 /// </summary>
 /// <returns>A <see cref="Task{ulong}"/> representing the asynchronous operation, with the new fee per byte value.</returns>
 /// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
-    public async Task<ulong> UpdateFeePerByte()
+    public async Task UpdateFeePerByte()
     {
-        try
-        {
             var url = $"{_rpcNodeUrl}/feePerByte/";
             var response = await _httpClient.GetAsync(url);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
                 var data = JsonConvert.DeserializeObject<JObject>(responseString);
                 FeePerByte = data["feePerByte"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
-                return FeePerByte;
-            }
-            else
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                throw new Exception(errorMessage ?? "Unknown error");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to update fee per byte: {e.Message}");
-        }
+           
+       
     }
 
      public void ValidateAddress(string address)

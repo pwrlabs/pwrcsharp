@@ -35,7 +35,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         ulong r = await sdk.GetActiveVotingPower();
-        Assert.Equal(0UL, r);
+        Assert.NotEqual(0UL, r);
     }
     [Fact]
     public async Task TestGetTotalDelegatorsCount()
@@ -51,7 +51,7 @@ public class PwrSdkTests
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         short r = await sdk.GetBlockChainVersion();
-        Assert.Equal(0,r);
+        Assert.NotEqual(0,r);
     }
 
 
@@ -73,7 +73,7 @@ public class PwrSdkTests
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         ulong r = await sdk.GetFeePerByte();
-        Assert.Equal(100,r);
+        Assert.Equal(100UL,r);
     }
 
    
@@ -102,7 +102,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetBlockByNumber(10);
-        Assert.Equal(10, r.Number);
+        Assert.Equal(10UL, r.Number);
     }    
     
     [Fact]
@@ -118,7 +118,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetStandbyValidatorsCount();
-         Assert.NotEqual(0,r.Data);
+         Assert.NotEqual(0UL,r.Data);
     }    
     
     [Fact]
@@ -126,7 +126,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetActiveValidatorsCount();
-        Assert.NotEqual(0,r.Data);
+        Assert.NotEqual(0UL,r.Data);
     }    
     
     [Fact]
@@ -165,8 +165,9 @@ public class PwrSdkTests
     public async Task TestUpdateFeePerByte()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.UpdateFeePerByte();
-        Assert.True(r > 0);
+        ulong before = sdk.FeePerByte;
+        await sdk.UpdateFeePerByte();
+        Assert.NotEqual(before,sdk.FeePerByte);
     } 
 
     [Fact]

@@ -9,12 +9,12 @@ public class Delegator
    
     public string ValidatorAddress { get; }
 
-    public decimal Shares { get; }
+    public ulong Shares { get; }
 
-    public decimal DelegatedPwr { get; }
+    public ulong DelegatedPwr { get; }
       
 
-    public Delegator(string address, string validatorAddress, decimal shares, decimal delegatedPwr)
+    public Delegator(string address, string validatorAddress, ulong shares, ulong delegatedPwr)
     {
         Address = address;
         ValidatorAddress = validatorAddress;

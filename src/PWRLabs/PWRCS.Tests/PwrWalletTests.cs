@@ -22,10 +22,10 @@ public class PwrWalletTests
     [Fact]
     public async Task TestTransfer()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "040928b5e48d6761b8ab2b657b5e7735f16cc5365c153c82a6016a4541f16ef9");
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "d5cebdc74ba9c0746da66e4ee13a2bae73c3e24218959afdb6e2a4f964599b66");
         
         var wallet2 = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var r = await wallet.TransferPwr(wallet2.PublicAddress, 100);
+        var r = await wallet.TransferPWR("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770", 1);
         Assert.True(r.Success);
     }
     
@@ -34,7 +34,7 @@ public class PwrWalletTests
     {
         var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
         var nonce = await wallet.GetNonce();
-        Assert.Equal(0, nonce);
+        Assert.Equal(0UL, nonce);
     }  
     
     [Fact]
@@ -42,7 +42,7 @@ public class PwrWalletTests
     {
         var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
         var nonce = await wallet.GetBalance();
-        Assert.Equal(0, nonce);
+        Assert.Equal(0UL, nonce);
     }    
     
     [Fact]
@@ -64,8 +64,8 @@ public class PwrWalletTests
     [Fact]
     public async Task TestWithdraw()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var r = await wallet.Withdraw(wallet.PublicAddress, 10);
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"),"d5cebdc74ba9c0746da66e4ee13a2bae73c3e24218959afdb6e2a4f964599b66");
+        var r = await wallet.WithDrawPWR(wallet.PublicAddress, 1);
         Assert.True(r.Success);
     }
     
@@ -76,4 +76,6 @@ public class PwrWalletTests
         var r = await wallet.ClaimVmId(0);
         Assert.True(r.Success);
     }
+
+    
 }

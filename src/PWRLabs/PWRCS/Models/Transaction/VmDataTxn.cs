@@ -10,13 +10,14 @@ public class VmDataTxn : Transaction
 
     [JsonProperty("data")]
     public string Data { get; }
-    public VmDataTxn(uint size, ulong blockNumber, uint positionuintheBlock, ulong fee, string type, string fromAddress, string to, uint nonce, string hash,ulong value, ulong timestamp,ulong vmId,string data) 
-    : base(size, blockNumber, positionuintheBlock, fee, type, fromAddress, to, nonce, hash,value, timestamp)
+    public VmDataTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string fromAddress, string to, uint nonce, string hash,ulong value, ulong timestamp,ulong vmId,string data) 
+    : base(size, blockNumber, positionintheBlock, fee, type, fromAddress, to, nonce, hash,value, timestamp)
     {
         this.VmId = vmId;
         this.Data = data;
     }
 
-
-   
+    public VmDataTxn()
+    {
+    }
 }

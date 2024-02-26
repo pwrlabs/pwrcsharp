@@ -20,17 +20,28 @@ public class PwrWallet
         _apiSdk = apiSdk;
     }
 
-    public PwrWallet(PwrApiSdk apiSdk, string privateKeyHex)
-    {
-        _apiSdk = apiSdk;
+ public PwrWallet(PwrApiSdk apiSdk, string privateKeyHex)
+{
+    _apiSdk = apiSdk;
 
+    try
+    {
         _ecKey = new EthECKey(privateKeyHex);
 
         PrivateKeyHex = _ecKey.GetPrivateKeyAsBytes().ToHex();
         PublicKeyHex = _ecKey.GetPubKey().ToHex();
 
         PublicAddress = _ecKey.GetPublicAddress();
+
+        Console.WriteLine("Private Key: " + PrivateKeyHex);
+        Console.WriteLine("Public Key: " + PublicKeyHex);
+        Console.WriteLine("Public Address: " + PublicAddress);
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error generating keys: " + ex.Message);
+    }
+}
 
     public PwrWallet(PwrApiSdk apiSdk, EthECKey key)
     {
@@ -97,168 +108,20 @@ public class PwrWallet
 
         return response.Data;
     }
-    public async Task<WalletResponse> TransferPwr(string to, uint amount, uint? nonce = null)
-    {
-        if (to.Length != 42)
-            throw new ArgumentException("Invalid address");
-        if (amount < 0)
-            throw new ArgumentException("Amount cannot be negative");
-        if (nonce < 0)
-            throw new ArgumentException("Nonce cannot be negative");
-
-        if (!nonce.HasValue)
-        {
-            var nonceResponse = await _apiSdk.GetNonceOfAddress(PublicAddress);
-            if (!nonceResponse.Success)
-                return new WalletResponse(false, null, nonceResponse.Message);
-            nonce = nonceResponse.Data;
-        }
-    
-        byte[] txnBuffer = new byte[33];
-        txnBuffer[0] = 0;
-        Array.Copy(BitConverter.GetBytes(nonce.Value), 0, txnBuffer, 1, 4);
-        Array.Copy(BitConverter.GetBytes(amount), 0, txnBuffer, 5, 4);
-        var addressBytes = to[2..].HexStringToByteArray();
-        Array.Copy(addressBytes, 0, txnBuffer, 13, 20);
-
-        byte[] txn = new byte[33];
-        Array.Copy(txnBuffer, txn, 33);
-        var signature = Signer.SignMessage(_ecKey, txn);
-
-        byte[] finalTxn = new byte[98];
-        Array.Copy(txn, 0, finalTxn, 0, 33);
-        Array.Copy(signature, 0, finalTxn, 33, 65);
-
-        var response = await _apiSdk.BroadcastTxn(finalTxn);
-        return CreateWalletResponse(response, finalTxn);
-    }
-    public async Task<WalletResponse> SendVmDataTxn(ulong vmId, byte[] data, uint? nonce = null)
-    {
-
-        if (nonce < 0)
-            throw new ArgumentException("Nonce cannot be negative");
-        if (nonce < await GetNonce())
-            throw new ArgumentException("Nonce is too low");
-
-        if (!nonce.HasValue)
-        {
-            var nonceResponse = await _apiSdk.GetNonceOfAddress(PublicAddress);
-            if (!nonceResponse.Success)
-                return new WalletResponse(false, null, nonceResponse.Message);
-            nonce = nonceResponse.Data;
-        }
-
-       
-        int dataLen = data.Length;
-        byte[] buffer = new byte[13 + dataLen];
-        buffer[0] = 5;
-        Array.Copy(BitConverter.GetBytes(nonce.Value), 0, buffer, 1, 4);
-        Array.Copy(BitConverter.GetBytes(vmId), 0, buffer, 5, 8);
-        Array.Copy(data, 0, buffer, 13, dataLen);
-        byte[] txn = buffer;
-        byte[] signature = Signer.SignMessage(_ecKey, txn);
-
-        byte[] finalTxn = new byte[13 + 65 + dataLen];
-        Array.Copy(txn, finalTxn, txn.Length);
-        Array.Copy(signature, 0, finalTxn, txn.Length, 65);
-
-        var response = await _apiSdk.BroadcastTxn(finalTxn);
-        return CreateWalletResponse(response, finalTxn);
-    }
-    public async Task<WalletResponse> Delegate(string to, ulong amount, uint? nonce = null)
-    {
-        ValidateAddress(to);
-        if(amount < 0 ) throw new ArgumentException("Amount cannot be negative.");
-        if (!nonce.HasValue)
-        {
-            var nonceResponse = await _apiSdk.GetNonceOfAddress(PublicAddress);
-            if (!nonceResponse.Success)
-                return new WalletResponse(false, null, nonceResponse.Message);
-            nonce = nonceResponse.Data;
-        }
-
-        byte[] buffer = new byte[33];
-        buffer[0] = 3;
-        Array.Copy(BitConverter.GetBytes(nonce.Value), 0, buffer, 1, 4);
-        Array.Copy(BitConverter.GetBytes(amount), 0, buffer, 5, 8);
-        Array.Copy(to[2..].HexStringToByteArray(), 0, buffer, 13, 20);
-        byte[] txn = buffer;
-        byte[] signature = Signer.SignMessage(_ecKey, txn);
-
-        int txnLen = txn.Length;
-        byte[] finalTxn = new byte[txnLen + 65];
-        Array.Copy(txn, finalTxn, txnLen);
-        Array.Copy(signature, 0, finalTxn, txnLen, 65);
-
-        var response = await _apiSdk.BroadcastTxn(finalTxn);
-        return CreateWalletResponse(response, finalTxn);
-    }   
-    public async Task<WalletResponse> Withdraw(string fromWallet, ulong sharesAmount, uint? nonce = null)
-    {
-        ValidateAddress(fromWallet);
-        if(sharesAmount < 0) throw new ArgumentException("SharesAmount cannot be negative.");
-        if (!nonce.HasValue)
-        {
-            var nonceResponse = await _apiSdk.GetNonceOfAddress(PublicAddress);
-            if (!nonceResponse.Success)
-                return new WalletResponse(false, null, nonceResponse.Message);
-            nonce = nonceResponse.Data;
-        }
-
-        byte[] buffer = new byte[33];
-        buffer[0] = 4;
-        Array.Copy(BitConverter.GetBytes(nonce.Value), 0, buffer, 1, 4);
-        Array.Copy(BitConverter.GetBytes(sharesAmount), 0, buffer, 5, 8);
-        Array.Copy(fromWallet[2..].HexStringToByteArray(), 0, buffer, 13, 20);
-        byte[] txn = buffer;
-        byte[] signature = Signer.SignMessage(_ecKey, txn);
-
-        int txnLen = txn.Length;
-        byte[] finalTxn = new byte[txnLen + 65];
-        Array.Copy(txn, finalTxn, txnLen);
-        Array.Copy(signature, 0, finalTxn, txnLen, 65);
-
-        var response = await _apiSdk.BroadcastTxn(finalTxn);
-        return CreateWalletResponse(response, finalTxn);
-    }
-    public async Task<WalletResponse> ClaimVmId(ulong vmId, uint? nonce = null)
-    {
-        
-        if (!nonce.HasValue)
-        {
-            var nonceResponse = await _apiSdk.GetNonceOfAddress(PublicAddress);
-            if (!nonceResponse.Success)
-                return new WalletResponse(false, null, nonceResponse.Message);
-            nonce = nonceResponse.Data;
-        }
-
-        byte[] buffer = new byte[13];
-        buffer[0] = 6;
-        Array.Copy(BitConverter.GetBytes(nonce.Value), 0, buffer, 1, 4);
-        Array.Copy(BitConverter.GetBytes(vmId), 0, buffer, 5, 8);
-        byte[] txn = buffer;
-        byte[] signature = Signer.SignMessage(_ecKey, txn);
-
-        int txnLen = txn.Length;
-        byte[] finalTxn = new byte[txnLen + 65];
-        Array.Copy(txn, finalTxn, txnLen);
-        Array.Copy(signature, 0, finalTxn, txnLen, 65);
-
-        var response = await _apiSdk.BroadcastTxn(finalTxn);
-        return CreateWalletResponse(response, finalTxn);
-    }
+  
     public byte[] GetSignedTxn(byte[] txn){
         if(txn == null) throw new ArgumentException("txn cannot be null");
 
         byte[] signature = Signer.SignMessage(_ecKey,txn);
-
+        Console.WriteLine("Base txn length : " + txn.Length);
+        Console.WriteLine("signature length : " + signature.Length);
         int finalTxnLength = txn.Length + 65;
 
         byte[] finalTxn = new byte[finalTxnLength];
 
         Array.Copy(txn, 0, finalTxn, 0, txn.Length);
         Array.Copy(signature, 0, finalTxn, txn.Length, signature.Length);
-
+        Console.WriteLine("Final txn legnth : " + finalTxn.Length);
         return finalTxn;
     }
     public async Task<byte[]> GetTxnBase(byte identifier, uint nonce)  {
@@ -266,31 +129,24 @@ public class PwrWallet
         MemoryStream stream = new MemoryStream(6);
 
         stream.WriteByte(identifier);
-        uint chainId = await _apiSdk.GetChainId();
-        byte[] chainIdBytes = BitConverter.GetBytes(chainId);
-        stream.Write(chainIdBytes, 0, chainIdBytes.Length);
+        byte chainId = await _apiSdk.GetChainId();
+       
+        stream.WriteByte(chainId);
         
         byte[] nonceBytes = BitConverter.GetBytes(nonce);
         stream.Write(nonceBytes, 0, nonceBytes.Length);
-
+        Console.WriteLine("here " + stream.ToArray().Length);
         return stream.ToArray();
 
      }
     public async Task<byte[]> GetTransferPWRTxn(string to, ulong amount, uint nonce)
     {
         ValidateAddress(to);
-        if (amount < 0)
-        {
-            throw new ArgumentException("Amount cannot be negative");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-     
+       
         to = to.Substring(2);
         
         byte[] txnBase = await GetTxnBase(0, nonce);
+        Console.WriteLine("txn base lenth : " + txnBase.Length);
         using (MemoryStream stream = new MemoryStream(txnBase.Length + 8 + 20))
         {
             stream.Write(txnBase, 0, txnBase.Length);
@@ -305,13 +161,13 @@ public class PwrWallet
         return GetSignedTxn(await GetTransferPWRTxn(to,amount,nonce));
      }
     public async Task<WalletResponse> TransferPWR(string to, ulong amount, uint nonce)   {
-        
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedTransferPWRTxn(to, amount, nonce)));
+        var signed = await GetSignedTransferPWRTxn(to, amount, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> TransferPWR(string to, ulong amount)   {
         return await TransferPWR(to,amount,await GetNonce());
     }
-    public async Task<byte[]> GetJouintxn(string ip, uint nonce)
+    public async Task<byte[]> GetJointxn(string ip, uint nonce)
     {
         byte[] txnBase = await GetTxnBase(1, nonce);
         byte[] ipBytes = Encoding.UTF8.GetBytes(ip);
@@ -321,11 +177,11 @@ public class PwrWallet
         stream.Write(ipBytes, 0, ipBytes.Length);
         return stream.ToArray();
     }
-    public async Task<byte[]> GetSignedJouintxn(string ip, uint nonce)   {
-        return GetSignedTxn(await GetJouintxn(ip, nonce));
+    public async Task<byte[]> GetSignedJointxn(string ip, uint nonce)   {
+        return GetSignedTxn(await GetJointxn(ip, nonce));
     }
     public async Task<WalletResponse> Join(string ip, uint nonce)   {
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedJouintxn(ip, nonce)));
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedJointxn(ip, nonce)));
     }
     public async Task<WalletResponse> Join(string ip)   {
         return await Join(ip,await GetNonce());
@@ -345,6 +201,7 @@ public class PwrWallet
     }
     public async Task<byte[]> GetDelegateTxn(string to, ulong amount, uint nonce)
     {
+        ValidateAddress(to);
         if (to.Length != 40 && to.Length != 42)
         {
             throw new ArgumentException("Invalid address");
@@ -386,23 +243,8 @@ public class PwrWallet
     }
     public async Task<byte[]> GetWithdrawTxn(string from, ulong sharesAmount, uint nonce)
     {
-        if (from.Length != 40 && from.Length != 42)
-        {
-            throw new ArgumentException("Invalid address");
-        }
-        if (sharesAmount < 0)
-        {
-            throw new ArgumentException("Shares amount cannot be negative");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-
-        if (from.Length == 42)
-        {
+        ValidateAddress(from);
             from = from.Substring(2);
-        }
 
         byte[] txnBase = await GetTxnBase(4, nonce);
         byte[] fromBytes = Extensions.HexStringToByteArray(from);
@@ -427,23 +269,8 @@ public class PwrWallet
     }
     public async Task<byte[]> GetWithdrawPWRTxn(string from, ulong pwrAmount, uint nonce)
     {
-        if (from.Length != 40 && from.Length != 42)
-        {
-            throw new ArgumentException("Invalid address");
-        }
-        if (pwrAmount < 0)
-        {
-            throw new ArgumentException("PWR amount cannot be negative");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-
-        if (from.Length == 42)
-        {
+       ValidateAddress(from);
             from = from.Substring(2);
-        }
 
         BigDecimal shareValue = await _apiSdk.GetShareValue(from);
         
@@ -477,10 +304,7 @@ public class PwrWallet
     }
     public async Task<byte[]> GetSendVmDataTxn(ulong vmId, byte[] data, uint nonce)
     {
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
+        
         if (nonce < await GetNonce())
         {
             throw new ArgumentException("Nonce is too low");
@@ -529,10 +353,7 @@ public class PwrWallet
     }
     public async Task<byte[]> GetSendConduitTransactionTxn(ulong vmId, byte[] txn, uint nonce)
     {
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
+       
         if (nonce < await GetNonce())
         {
             throw new ArgumentException("Nonce is too low");
@@ -560,18 +381,7 @@ public class PwrWallet
     }
     public async Task<byte[]> GetSetGuardianTxn(string guardianAddress, ulong expiryDate, uint nonce)
     {
-        if (guardianAddress.Length != 40 && guardianAddress.Length != 42)
-        {
-            throw new ArgumentException("Invalid address");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-        if (expiryDate < 0)
-        {
-            throw new ArgumentException("Expiry date cannot be negative");
-        }
+        ValidateAddress(guardianAddress);
         if (expiryDate < (ulong) DateTimeOffset.Now.ToUnixTimeSeconds())
         {
             throw new ArgumentException("Expiry date cannot be in the past");
@@ -645,19 +455,9 @@ public class PwrWallet
     }
     public async Task<byte[]> GetSendValidatorRemoveTxn(string validator, uint nonce)
     {
-        if (validator.Length != 40 && validator.Length != 42)
-        {
-            throw new ArgumentException("Invalid address");
-        }
-        if (nonce < 0)
-        {
-            throw new ArgumentException("Nonce cannot be negative");
-        }
-
-        if (validator.Length == 42)
-        {
+       ValidateAddress(validator);
             validator = validator.Substring(2);
-        }
+       
 
         byte[] txnBase = await GetTxnBase(7, nonce);
         byte[] validatorBytes = Extensions.HexStringToByteArray(validator);
