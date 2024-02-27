@@ -6,10 +6,10 @@ public class PwrSdkTests
 {
 
     [Fact]
-    public void TestGetLatestBlockNumber()
+    public async Task TestGetLatestBlockNumber()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        ulong r = sdk.GetLatestBlockNumber();
+        ulong r = await sdk.GetLatestBlockNumber();
         Assert.NotEqual(0UL,r);
     }
     [Fact]
@@ -94,7 +94,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetBlocksCount();
-        Assert.True(r.Data > 0);
+        Assert.True(r > 0);
     }
     
     [Fact]
@@ -110,7 +110,7 @@ public class PwrSdkTests
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetTotalValidatorsCount();
-        Assert.True(r.Data >= 0);
+        Assert.True(r >= 0);
     }    
     
     [Fact]

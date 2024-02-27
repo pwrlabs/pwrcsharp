@@ -10,7 +10,9 @@ using Org.BouncyCastle.Ocsp;
 using PWRCS.Models;
 
 namespace PWRCS;
-
+/// <summary>
+/// Provides methods to interact with the PWR blockchain via RPC calls.
+/// </summary>
 public class PwrApiSdk
 {
     private readonly string _rpcNodeUrl;
@@ -26,6 +28,13 @@ public class PwrApiSdk
     public string RpcNodeUrl => _rpcNodeUrl;
     private byte ChainId = unchecked((byte)-1);
 
+
+     /// <summary>
+    /// Makes a generic HTTP GET request to the specified URL.
+    /// </summary>
+    /// <param name="url">The URL to send the request to.</param>
+    /// <returns>A string containing the response from the server.</returns>
+    /// <exception cref="Exception">Thrown when an error occurs during the HTTP request.</exception>
      public async Task<string> Request(string url)
     {
         try
@@ -34,6 +43,7 @@ public class PwrApiSdk
 
             if (response.IsSuccessStatusCode)
             {
+                Console.WriteLine("success");
                 var responseString = await response.Content.ReadAsStringAsync();
                  if (string.IsNullOrWhiteSpace(responseString)) throw new Exception("The response from the RPC node was empty.");
                 return responseString;
@@ -55,6 +65,10 @@ public class PwrApiSdk
     public async Task<string> TestRequest(string url){
     return await Request(url);
     }
+    /// <summary>
+    /// Retrieves the chain ID of the blockchain.
+    /// </summary>
+    /// <returns>The chain ID.</returns>
     public async Task<byte> GetChainId()
 {
     if (ChainId == unchecked((byte)-1))
@@ -84,6 +98,10 @@ public class PwrApiSdk
    
     return ChainId;
 }
+    /// <summary>
+    /// Retrieves the fee per byte for transactions on the blockchain.
+    /// </summary>
+    /// <returns>The fee per byte.</returns>
     public async Task<ulong> GetFeePerByte(){
         if(FeePerByte == 0){
        
@@ -95,6 +113,10 @@ public class PwrApiSdk
         }
         return FeePerByte;
     }
+    /// <summary>
+    /// Retrieves the version of the blockchain.
+    /// </summary>
+    /// <returns>The version of the blockchain.</returns>
     public async Task<short> GetBlockChainVersion(){
        
             var url = $"{_rpcNodeUrl}/blockchainVersion/";
@@ -106,9 +128,21 @@ public class PwrApiSdk
 
        
     }
-    public ulong GetLatestBlockNumber(){
-       return GetBlocksCount().Result.Data -1;
+    /// <summary>
+    /// Retrieves the number of the latest block in the blockchain.
+    /// </summary>
+    /// <returns>The number of the latest block.</returns>
+    public async Task<ulong> GetLatestBlockNumber(){
+       return await GetBlocksCount() - (ulong)1;
     }
+    /// <summary>
+    /// Retrieves a list of virtual machine data transactions within the specified block range and virtual machine ID.
+    /// </summary>
+    /// <param name="startingBlock">The starting block number of the range.</param>
+    /// <param name="endingBlock">The ending block number of the range.</param>
+    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <returns>A list of <see cref="VmDataTxn"/> representing the virtual machine data transactions.</returns>
+    /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or the response JSON does not contain 'transactions'.</exception>   
     public async Task<List<VmDataTxn>> GetVmDataTxns(ulong startingBlock, ulong endingBlock, ulong vmId){
           
         var url = $"{_rpcNodeUrl}getVmTransactions/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}";
@@ -123,6 +157,14 @@ public class PwrApiSdk
         return vmDataTxnList;
         
     }
+    /// <summary>
+    /// Retrieves a list of virtual machine data transactions within the specified block range, virtual machine ID, and byte prefix filter.
+    /// </summary>
+    /// <param name="startingBlock">The starting block number of the range.</param>
+    /// <param name="endingBlock">The ending block number of the range.</param>
+    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <param name="prefix">The byte prefix filter.</param>
+    /// <returns>A list of <see cref="VmDataTxn"/> representing the virtual machine data transactions.</returns>
     public async Task<List<VmDataTxn>> GetVmDataTxnsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vmId, byte[] prefix){
          
             var url = $"{_rpcNodeUrl}/getVmTransactionsSortByBytePrefix/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
@@ -136,6 +178,10 @@ public class PwrApiSdk
             return vmDataTxnList;
        
     }
+    /// <summary>
+    /// Retrieves the active voting power on the blockchain.
+    /// </summary>
+    /// <returns>The active voting power.</returns>
     public  async Task<ulong> GetActiveVotingPower()  {
         
             var url = $"{_rpcNodeUrl}/activeVotingPower/";
@@ -144,6 +190,10 @@ public class PwrApiSdk
             var responseData = JsonConvert.DeserializeObject<JObject>(response);
            return responseData["activeVotingPower"]?.Value<ulong>() ?? 0;
     }
+    /// <summary>
+    /// Retrieves the total count of delegators on the blockchain.
+    /// </summary>
+    /// <returns>The total count of delegators.</returns>
     public async Task<uint> GetTotalDelegatorsCount()  {
          
             var url = $"{_rpcNodeUrl}/totalDelegatorsCount/";
@@ -154,6 +204,11 @@ public class PwrApiSdk
 
        
     }
+    /// <summary>
+    /// Retrieves the list of delegatees of the specified user address.
+    /// </summary>
+    /// <param name="address">The address of the user.</param>
+    /// <returns>A list of <see cref="Validator"/> representing the delegatees.</returns>
     public  async Task<List<Validator>> GetDelegatees(string address)  {
         ValidateAddress(address);
             var url = $"{_rpcNodeUrl}/delegateesOfUser/?userAddress={address}";
@@ -165,6 +220,11 @@ public class PwrApiSdk
 
           return null;
     }
+    /// <summary>
+    /// Retrieves the validator information for the specified validator address.
+    /// </summary>
+    /// <param name="validatorAddress">The address of the validator.</param>
+    /// <returns>The <see cref="Validator"/> object representing the validator.</returns>
     public  async Task<Validator> GetValidator(string validatorAddress)  {
         ValidateAddress(validatorAddress);
          
@@ -175,6 +235,13 @@ public class PwrApiSdk
            return null;
         
     }
+
+    /// <summary>
+    /// Retrieves the delegated PWR (Power) for the specified delegator and validator addresses.
+    /// </summary>
+    /// <param name="delegatorAddress">The address of the delegator.</param>
+    /// <param name="validatorAddress">The address of the validator.</param>
+    /// <returns>The delegated PWR amount.</returns>
     public  async Task<ulong> GetDelegatedPWR(string delegatorAddress, string validatorAddress)  {
         ValidateAddress(delegatorAddress);
         ValidateAddress(validatorAddress);
@@ -186,6 +253,11 @@ public class PwrApiSdk
 
            return responseData["delegatedPWR"]?.Value<ulong>() ?? 0;
     }
+    /// <summary>
+    /// Retrieves the share value of the specified validator.
+    /// </summary>
+    /// <param name="validator">The address of the validator.</param>
+    /// <returns>The share value.</returns>
     public  async Task<BigDecimal> GetShareValue(string validator)  {
         ValidateAddress(validator);
          
@@ -197,6 +269,11 @@ public class PwrApiSdk
            return BigDecimal.Parse(value);
     
     }
+    /// <summary>
+    /// Retrieves the owner of the virtual machine with the specified ID.
+    /// </summary>
+    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <returns>The owner of the virtual machine.</returns>
     public  async Task<string> GetOwnerOfVm(ulong vmId)  {
       
             var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
@@ -207,6 +284,11 @@ public class PwrApiSdk
             return responseData["owner"]?.Value<string>() ?? "";
     
     }
+    /// <summary>
+    /// Broadcasts a transaction to the blockchain.
+    /// </summary>
+    /// <param name="txn">The transaction to broadcast.</param>
+    /// <returns>An <see cref="ApiResponse"/> object representing the result of the broadcast.</returns>
     public async Task<ApiResponse> BroadcastTxn(byte[] txn)
     {
         try
@@ -227,6 +309,11 @@ public class PwrApiSdk
             return new ApiResponse(false, e.Message);
         }
     }
+    /// <summary>
+    /// Retrieves the nonce of the specified user address.
+    /// </summary>
+    /// <param name="address">The address of the user.</param>
+    /// <returns>An <see cref="ApiResponse{T}"/> object containing the nonce value.</returns>
     public async Task<ApiResponse<uint>> GetNonceOfAddress(string address)
     {
         ValidateAddress(address);
@@ -250,6 +337,11 @@ public class PwrApiSdk
             return new ApiResponse<uint>(false, e.Message);
         }
     }
+    /// <summary>
+    /// Retrieves the balance of the specified user address.
+    /// </summary>
+    /// <param name="address">The address of the user.</param>
+    /// <returns>An <see cref="ApiResponse{T}"/> object containing the balance value.</returns>
     public async Task<ApiResponse<ulong>> GetBalanceOfAddress(string address)
     {
         ValidateAddress(address);
@@ -275,6 +367,11 @@ public class PwrApiSdk
             return new ApiResponse<ulong>(false, e.Message);
         }
     }
+    /// <summary>
+    /// Retrieves the guardian address and guardian status of the specified user address.
+    /// </summary>
+    /// <param name="address">The address of the user.</param>
+    /// <returns>The guardian address if present and the guardian status.</returns>
     public async Task<string> GetGuardianOfAddress(string address)
     {
         ValidateAddress(address);
@@ -288,29 +385,20 @@ public class PwrApiSdk
 
            return responseData["guardian"]?.Value<string>() ?? "";     
     }
-    public async Task<ApiResponse<ulong>> GetBlocksCount()
+    /// <summary>
+    /// Retrieves the total count of blocks in the blockchain.
+    /// </summary>
+    /// <returns>The total count of blocks.</returns>
+    public async Task<ulong> GetBlocksCount()
     {
-        try
-        {
+        
             var url = $"{_rpcNodeUrl}/blocksCount/";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var response = await Request(url);
 
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                return new ApiResponse<ulong>(false, errorMessage ?? "Unknown error");
-            }
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
             var blocksCount = responseData["blocksCount"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
 
-            return new ApiResponse<ulong>(true, "Success", blocksCount);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<ulong>(false, e.Message);
-        }
+            return blocksCount;       
     }
     
     /// <summary>
@@ -353,7 +441,11 @@ public class PwrApiSdk
                 return blockInstance;
           
     }
-    public async Task<ApiResponse<uint>> GetTotalValidatorsCount()
+    /// <summary>
+    /// Retrieves the total count of validators on the blockchain.
+    /// </summary>
+    /// <returns>The total count of validators.</returns>
+    public async Task<uint> GetTotalValidatorsCount()
     {
      
             var url = $"{_rpcNodeUrl}/totalValidatorsCount/";
@@ -361,8 +453,12 @@ public class PwrApiSdk
             var responseData = JsonConvert.DeserializeObject<JObject>(response);
             var validatorsCount = responseData["validatorsCount"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
 
-            return new ApiResponse<uint>(true, "Success", validatorsCount);
+            return validatorsCount;
     }
+    /// <summary>
+    /// Retrieves the total count of standby validators on the blockchain.
+    /// </summary>
+    /// <returns>The total count of standby validators.</returns>
     public async Task<uint> GetStandbyValidatorsCount()
     {
        
@@ -375,6 +471,10 @@ public class PwrApiSdk
 
             return validatorsCount;
     }
+    /// <summary>
+    /// Retrieves the total count of active validators on the blockchain.
+    /// </summary>
+    /// <returns>The total count of active validators.</returns>
     public async Task<uint> GetActiveValidatorsCount()
     {
       
@@ -387,6 +487,10 @@ public class PwrApiSdk
             return validatorsCount;
        
     }
+    /// <summary>
+    /// Retrieves a list of all validators on the blockchain.
+    /// </summary>
+    /// <returns>A list of <see cref="Validator"/> objects representing all validators.</returns>
     public async Task<List<Validator>> GetAllValidators()
     {
        
@@ -429,6 +533,10 @@ public class PwrApiSdk
             
           
     }
+    /// <summary>
+    /// Retrieves a list of standby validators on the blockchain.
+    /// </summary>
+    /// <returns>A list of <see cref="Validator"/> objects representing standby validators.</returns>
     public async Task<List<Validator>> GetStandbyValidators()
     {
        
@@ -470,6 +578,10 @@ public class PwrApiSdk
                 return validators;
            
     }
+    /// <summary>
+    /// Retrieves a list of active validators on the blockchain.
+    /// </summary>
+    /// <returns>A list of <see cref="Validator"/> objects representing active validators.</returns>
     public async Task<List<Validator>> GetActiveValidators()
     {
         
@@ -511,6 +623,11 @@ public class PwrApiSdk
                 return validators;
            
     }
+    /// <summary>
+    /// Retrieves the owner address of the virtual machine with the specified ID.
+    /// </summary>
+    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <returns>The owner address of the virtual machine.</returns>
     public async Task<string> GetOwnerOfVm(uint vmId)
     {
        
@@ -538,6 +655,11 @@ public class PwrApiSdk
        
     }
 
+/// <summary>
+/// Validates the format of an address.
+/// </summary>
+/// <param name="address">The address to validate.</param>
+/// <exception cref="ArgumentException">Thrown when the address is null, empty, or has an invalid format.</exception>
      public void ValidateAddress(string address)
     {
         if (string.IsNullOrEmpty(address))
