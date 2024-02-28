@@ -74,7 +74,7 @@ string address = await wallet.GetAddress();
 ```
 
 **Get wallet balance:**
-```java
+```csharp
 ulong balance = await wallet.GetBalance();
 ```
 
