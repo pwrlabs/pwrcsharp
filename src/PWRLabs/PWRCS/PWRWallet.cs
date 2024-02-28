@@ -13,14 +13,14 @@ public class PwrWallet
 {
     private readonly PwrApiSdk _apiSdk;
 
-    private readonly EthECKey _ecKey;
+    public  EthECKey? _ecKey {get;}
 
     public PwrWallet(PwrApiSdk apiSdk) : this(apiSdk, EthECKey.GenerateKey().GetPrivateKeyAsBytes().ToHex())
     {
         _apiSdk = apiSdk;
     }
 
- public PwrWallet(PwrApiSdk apiSdk, string privateKeyHex)
+    public PwrWallet(PwrApiSdk apiSdk, string? privateKeyHex = null)
 {
     _apiSdk = apiSdk;
 
@@ -28,12 +28,13 @@ public class PwrWallet
     {
         _ecKey = new EthECKey(privateKeyHex);
 
-        PrivateKeyHex = _ecKey.GetPrivateKeyAsBytes().ToHex();
+        PrivateKeyHex = privateKeyHex ?? throw new ArgumentException("Private key cannot be null");
         PublicKeyHex = _ecKey.GetPubKey().ToHex();
 
         PublicAddress = _ecKey.GetPublicAddress();
-
-        Console.WriteLine("Private Key: " + PrivateKeyHex);
+        
+        Console.WriteLine("Private Key as Hex: " + PrivateKeyHex);
+        Console.WriteLine("Private key BigInteger : " + BigInteger.Parse(privateKeyHex, System.Globalization.NumberStyles.HexNumber).ToString());
         Console.WriteLine("Public Key: " + PublicKeyHex);
         Console.WriteLine("Public Address: " + PublicAddress);
     }
@@ -41,6 +42,10 @@ public class PwrWallet
     {
         Console.WriteLine("Error generating keys: " + ex.Message);
     }
+}
+
+    public PwrWallet(PwrApiSdk apiSdk, BigInteger privateKey) : this(apiSdk, BitConverter.ToString(privateKey.ToByteArray()).Replace("-", "").ToLower())
+{
 }
 
     public PwrWallet(PwrApiSdk apiSdk, EthECKey key)
@@ -87,7 +92,7 @@ public class PwrWallet
             var txnHash = new Sha3Keccack().CalculateHash(finalTxn).ToHex();
             return new WalletResponse(true, "0x" + txnHash);
         }
-        else
+        else 
         {
             return new WalletResponse(false, null, response.Message);
         }
@@ -108,19 +113,16 @@ public class PwrWallet
 
         return response.Data;
     }
-      public byte[] GetSignedTxn(byte[] txn){
+    public byte[] GetSignedTxn(byte[] txn){
         if(txn == null) throw new ArgumentException("txn cannot be null");
 
         byte[] signature = Signer.SignMessage(_ecKey,txn);
-        Console.WriteLine("Base txn length : " + txn.Length);
-        Console.WriteLine("signature length : " + signature.Length);
         int finalTxnLength = txn.Length + 65;
 
         byte[] finalTxn = new byte[finalTxnLength];
 
         Array.Copy(txn, 0, finalTxn, 0, txn.Length);
         Array.Copy(signature, 0, finalTxn, txn.Length, signature.Length);
-        Console.WriteLine("Final txn legnth : " + finalTxn.Length);
         return finalTxn;
     }
     public async Task<byte[]> GetTxnBase(byte identifier, uint nonce)  {
@@ -133,8 +135,8 @@ public class PwrWallet
         stream.WriteByte(chainId);
         
         byte[] nonceBytes = BitConverter.GetBytes(nonce);
+        Array.Reverse(nonceBytes);
         stream.Write(nonceBytes, 0, nonceBytes.Length);
-        Console.WriteLine("here " + stream.ToArray().Length);
         return stream.ToArray();
 
      }
@@ -143,13 +145,13 @@ public class PwrWallet
         ValidateAddress(to);
        
         to = to.Substring(2);
-        
         byte[] txnBase = await GetTxnBase(0, nonce);
-        Console.WriteLine("txn base lenth : " + txnBase.Length);
         using (MemoryStream stream = new MemoryStream(txnBase.Length + 8 + 20))
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] amountBytes = BitConverter.GetBytes(amount);
+            Array.Reverse(amountBytes);
+
             stream.Write(amountBytes, 0, amountBytes.Length);
             byte[] toBytes = Extensions.HexStringToByteArray(to);
             stream.Write(toBytes, 0, toBytes.Length);
@@ -180,7 +182,8 @@ public class PwrWallet
         return GetSignedTxn(await GetJointxn(ip, nonce));
     }
     public async Task<WalletResponse> Join(string ip, uint nonce)   {
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedJointxn(ip, nonce)));
+        byte[] signed = await GetSignedJointxn(ip, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> Join(string ip)   {
         return await Join(ip,await GetNonce());
@@ -193,7 +196,8 @@ public class PwrWallet
         return GetSignedTxn(await GetClaimActiveNodeSpotTxn(nonce));
     }
     public async Task<WalletResponse> ClaimActiveNodeSpot(uint nonce)   {
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedClaimActiveNodeSpotTxn(nonce)));
+        byte[] signed = await GetSignedClaimActiveNodeSpotTxn(nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> ClaimActiveNodeSpot()   {
         return await ClaimActiveNodeSpot(await GetNonce());
@@ -211,8 +215,12 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] amountBytes = BitConverter.GetBytes(amount);
+             if(BitConverter.IsLittleEndian){
+                Array.Reverse(amountBytes);
+            }
             stream.Write(amountBytes, 0, amountBytes.Length);
             stream.Write(toBytes, 0, toBytes.Length);
+            Console.WriteLine(stream.ToArray().Length);
             return stream.ToArray();
         }
     }
@@ -220,7 +228,8 @@ public class PwrWallet
         return GetSignedTxn(await GetDelegateTxn(to, amount, nonce));
     }
     public async Task<WalletResponse> Delegate(string to, ulong amount, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedDelegateTxn(to,amount,nonce)));
+        var signed = await GetSignedDelegateTxn(to, amount, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> Delegate(string to, ulong amount){
         return await Delegate(to,amount,await GetNonce());
@@ -237,6 +246,7 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] sharesAmountBytes = BitConverter.GetBytes(sharesAmount);
+            Array.Reverse(sharesAmountBytes);
             stream.Write(sharesAmountBytes, 0, sharesAmountBytes.Length);
             stream.Write(fromBytes, 0, fromBytes.Length);
             return stream.ToArray();
@@ -246,7 +256,8 @@ public class PwrWallet
         return GetSignedTxn(await GetWithdrawTxn(from, sharesAmount, nonce));
     }
     public async Task<WalletResponse> WithDraw(string to, ulong amount, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedWithdrawTxn(to,amount,nonce)));
+        byte[] signed = await GetSignedWithdrawTxn(to,amount,nonce); 
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> WithDraw(string to, ulong amount){
         return await WithDraw(to,amount,await GetNonce());
@@ -257,8 +268,7 @@ public class PwrWallet
             from = from.Substring(2);
 
         BigDecimal shareValue = await _apiSdk.GetShareValue(from);
-        
-        ulong sharesAmount = (ulong)(pwrAmount / 5000);
+        ulong sharesAmount = (ulong)(pwrAmount / 5 /*share value*/ );
 
         if (sharesAmount <= 0)
         {
@@ -272,6 +282,8 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] sharesAmountBytes = BitConverter.GetBytes(sharesAmount);
+            Array.Reverse(sharesAmountBytes);
+
             stream.Write(sharesAmountBytes, 0, sharesAmountBytes.Length);
             stream.Write(fromBytes, 0, fromBytes.Length);
             return stream.ToArray();
@@ -281,7 +293,8 @@ public class PwrWallet
         return GetSignedTxn(await GetWithdrawPWRTxn(from, pwrAmount, nonce));
     }
     public async Task<WalletResponse> WithDrawPWR(string to, ulong amount, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedWithdrawTxn(to,amount,nonce)));
+        byte[] signed = await GetSignedWithdrawTxn(to,amount,nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> WithDrawPWR(string to, ulong amount){
         return await WithDraw(to,amount,await GetNonce());
@@ -300,6 +313,8 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] vmIdBytes = BitConverter.GetBytes(vmId);
+            Array.Reverse(vmIdBytes);
+
             stream.Write(vmIdBytes, 0, vmIdBytes.Length);
             stream.Write(data, 0, data.Length);
             return stream.ToArray();
@@ -309,7 +324,8 @@ public class PwrWallet
         return GetSignedTxn(await GetSendVmDataTxn(vmId, data, nonce));
     }
     public async Task<WalletResponse> SendVmDataTxn(ulong vmId,byte[] data, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedSendVmDataTxn(vmId,data,nonce)));
+        byte[] signed = await GetSignedSendVmDataTxn(vmId,data,nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> SendVmDataTxn(ulong vmId,byte[] data){
         return await SendVmDataTxn(vmId,data,await GetNonce());
@@ -322,6 +338,7 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] vmIdBytes = BitConverter.GetBytes(vmId);
+            Array.Reverse(vmIdBytes);
             stream.Write(vmIdBytes, 0, vmIdBytes.Length);
             return stream.ToArray();
         }
@@ -330,7 +347,8 @@ public class PwrWallet
         return GetSignedTxn(await GetClaimVmIdTxn(vmId, nonce));
     }
     public async Task<WalletResponse> ClaimVmId(ulong vmid,uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedClaimVmIdTxn(vmid,nonce)));
+        byte[] signed = await GetSignedClaimVmIdTxn(vmid,nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> ClaimVmId(ulong vmId){
         return await ClaimVmId(vmId,await GetNonce());
@@ -349,6 +367,8 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] vmIdBytes = BitConverter.GetBytes(vmId);
+            Array.Reverse(vmIdBytes);
+
             stream.Write(vmIdBytes, 0, vmIdBytes.Length);
             stream.Write(txn, 0, txn.Length);
             return stream.ToArray();
@@ -358,7 +378,8 @@ public class PwrWallet
         return GetSignedTxn(await GetSendConduitTransactionTxn(vmId, txn, nonce));
     }
     public async Task<WalletResponse> SendConduitTransaction(ulong vmId, byte[] txn, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedSendConduitTransactionTxn(vmId,txn, nonce)));
+        byte[] signed = await GetSignedSendConduitTransactionTxn(vmId,txn, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> SendConduitTransaction(ulong vmId, byte[] txn){
         return await SendConduitTransaction(vmId,txn,await GetNonce());
@@ -383,6 +404,8 @@ public class PwrWallet
         {
             stream.Write(txnBase, 0, txnBase.Length);
             byte[] expiryDateBytes = BitConverter.GetBytes(expiryDate);
+            Array.Reverse(expiryDateBytes);
+
             stream.Write(expiryDateBytes, 0, expiryDateBytes.Length);
             stream.Write(guardianAddressBytes, 0, guardianAddressBytes.Length);
             return stream.ToArray();
@@ -395,7 +418,8 @@ public class PwrWallet
         return await GetSignedSetGuardianTxn(guardianAddress,expiryDate,await GetNonce());
     }
     public async Task<WalletResponse> SetGuardian(string guardianAddress, ulong expiryDate, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedSetGuardianTxn(guardianAddress,expiryDate,nonce)));
+        byte[] signed = await GetSignedSetGuardianTxn(guardianAddress,expiryDate,nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> SetGuardian(string guardianAddress, ulong expiryDate){
         return await SetGuardian(guardianAddress,expiryDate,await GetNonce());
@@ -412,9 +436,10 @@ public class PwrWallet
         return GetSignedTxn(await GetRemoveGuardianTxn(await GetNonce()));
     }
     public async Task<WalletResponse> RemoveGuardian(uint nonce)   {
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedRemoveGuardianTxn(nonce)));
+        byte[] signed = await GetSignedRemoveGuardianTxn(nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
-     public async Task<WalletResponse> RemoveGuardian()   {
+    public async Task<WalletResponse> RemoveGuardian()   {
         return await RemoveGuardian(await GetNonce());
     }
     public async Task<byte[]> GetSendGuardianWrappedTransactionTxn(byte[] txn, uint nonce)
@@ -432,7 +457,8 @@ public class PwrWallet
         return GetSignedTxn(await GetSendGuardianWrappedTransactionTxn(txn, nonce));
     } 
     public async Task<WalletResponse> SendGuardianWrappedTransaction(byte[] txn, uint nonce)   {
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedSendGuardianWrappedTransactionTxn(txn, nonce)));
+        byte[] signed = await GetSignedSendGuardianWrappedTransactionTxn(txn, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> SendGuardianWrappedTransaction(byte[] txn)   {
         return await SendGuardianWrappedTransaction(txn,await GetNonce());
@@ -457,7 +483,8 @@ public class PwrWallet
         return GetSignedTxn(await GetSendValidatorRemoveTxn(validator, nonce));
     }
     public async Task<WalletResponse> SendValidatorRemoveTxn(string validator, uint nonce){
-        return CreateWalletResponse(await _apiSdk.BroadcastTxn(await GetSignedSendValidatorRemoveTxn(validator, nonce)));
+        byte[] signed = await GetSignedSendValidatorRemoveTxn(validator, nonce);
+        return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
     }
     public async Task<WalletResponse> SendValidatorRemoveTxn(string validator){
         return await SendValidatorRemoveTxn(validator,await GetNonce());

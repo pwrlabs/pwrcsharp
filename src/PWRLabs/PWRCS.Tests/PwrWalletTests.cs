@@ -22,10 +22,9 @@ public class PwrWalletTests
     [Fact]
     public async Task TestTransfer()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "d5cebdc74ba9c0746da66e4ee13a2bae73c3e24218959afdb6e2a4f964599b66");
-        
-        var wallet2 = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var r = await wallet.TransferPWR("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770", 1);
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+
+        var r = await wallet.TransferPWR("0x8953f1c3B53Bd9739F78dc8B0CD5DB9686C40b09", 1);
         Assert.True(r.Success);
     }
     
@@ -48,7 +47,7 @@ public class PwrWalletTests
     [Fact]
     public async Task TestSendVmDataTxn()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
         var r = await wallet.SendVmDataTxn(0, new byte[]{ 1, 2,3});
         Assert.True(r.Success);
     }   
@@ -56,26 +55,70 @@ public class PwrWalletTests
     [Fact]
     public async Task TestDelegate()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var r = await wallet.Delegate(wallet.PublicAddress, 10);
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        var r = await wallet.Delegate("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 1000000000);
         Assert.True(r.Success);
     }    
     
     [Fact]
     public async Task TestWithdraw()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"),"d5cebdc74ba9c0746da66e4ee13a2bae73c3e24218959afdb6e2a4f964599b66");
-        var r = await wallet.WithDrawPWR(wallet.PublicAddress, 1);
+       
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var wallet = new PwrWallet(sdk,"5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        while (await sdk.GetDelegatedPWR(wallet.PublicAddress, "0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883") == 0)
+        {
+            await Task.Delay(1000);
+        }
+        var r = await wallet.WithDraw("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 10);
+        Assert.True(r.Success);
+    }
+
+     [Fact]
+    public async Task TestWithdrawPWR()
+    {
+
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var wallet = new PwrWallet(sdk,"5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        while (await sdk.GetDelegatedPWR(wallet.PublicAddress, "0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883") == 0)
+        {
+            await Task.Delay(1000);
+        }
+
+        var r = await wallet.WithDrawPWR("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 10000000);
         Assert.True(r.Success);
     }
     
     [Fact]
     public async Task TestClaimVmId()
     {
-        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var r = await wallet.ClaimVmId(0);
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        var r = await wallet.ClaimVmId(1);
         Assert.True(r.Success);
     }
 
+    [Fact]
+    public async Task TestSetGuardian()
+    {
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+       var r = await wallet.SetGuardian("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 1000000000);
+        Assert.True(r.Success);
+    }
+
+     [Fact]
+    public async Task TestSendGuardianWrappedTransaction()
+    {
+        PwrApiSdk sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var wallet = new PwrWallet(sdk, "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        byte[] transferTxn = await wallet.GetSignedTransferPWRTxn("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 1000,await wallet.GetNonce());
+        PwrWallet guardian = new PwrWallet(sdk,"03a5240936d67dc18dca348e793010a14c5eba86a73d0c9e45764681295a73df");
+        var r = await guardian.SendGuardianWrappedTransaction(transferTxn);
+        Assert.True(r.Success);
+
+        byte[] removeGuardianTxn = await  wallet.GetSignedRemoveGuardianTxn();
+        var response = await guardian.SendGuardianWrappedTransaction(removeGuardianTxn);
+        
+        Assert.True(response.Success);
+    }
     
 }

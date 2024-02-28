@@ -296,7 +296,7 @@ public class PwrApiSdk
             var url = $"{_rpcNodeUrl}/broadcast/";
             var payload = new { txn = txn.ToHex() };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            
+            Console.WriteLine(JsonConvert.SerializeObject(payload).ToString());
             var response = await _httpClient.PostAsync(url, content);
             var responseString = await response.Content.ReadAsStringAsync();
 
