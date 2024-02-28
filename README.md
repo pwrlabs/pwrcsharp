@@ -46,58 +46,53 @@ using com.github.pwrlabs.pwrj.*;
 
 **Set your RPC node:**
 ```java
-PWRCS.setRpcNodeUrl("https://pwrrpc.pwrlabs.io/");
+var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 ```
 
 **Generate a new wallet:** 
 ```java
-PWRWallet wallet = new PWRWallet(); 
+ var wallet = new PwrWallet(sdk);
 ```
 
 You also have the flexibility to import existing wallets using a variety of constructors
 ```java
-String privateKey = "private key"; //Replace with hex private key
-PWRWallet wallet = new PWRWallet(privateKey); 
+string privateKey = "private key"; //Replace with hex private key
+var wallet = new PWRWallet(sdk,privateKey); 
 ```
 ```java
-byte[] privateKey = ...; 
-PWRWallet wallet = new PWRWallet(privateKey); 
+BigInteger privateKey = BigInteger.Parse("...");
+var wallet = new PWRWallet(sdk,privateKey); 
 ```
 ```java
-ECKeyPair ecKeyPair = ...; //Generate or import ecKeyPair 
-PWRWallet wallet = new PWRWallet(ecKeyPair); 
+EthECKey ecKey = ...; //Generate or import ecKey 
+var wallet = new PWRWallet(sdk,ecKey); 
 ```
 
 **Get wallet address:**
 ```java
-String address = wallet.getAddress();
+string address = await wallet.getAddress();
 ```
 
 **Get wallet balance:**
 ```java
-ulong balance = wallet.getBalance();
-```
-
-**Get private key:**
-```java
-Biguinteger privateKey = wallet.getPrivateKey();
+ulong balance = await wallet.getBalance();
 ```
 
 **Transfer PWR tokens:**
 ```java
-wallet.transferPWR("recipientAddress", 1000); 
+var response = await wallet.TransferPWR("recipientAddress", amount); 
 ```
 
-Sending a transcation to the PWR Chain returns a Response object, which specified if the transaction was a success, and returns relevant data.
+Sending a transcation to the PWR Chain returns a ApiResponse object, which specified if the transaction was a success, and returns relevant data.
 If the transaction was a success, you can retrieive the transaction hash, if it failed, you can fetch the error.
 
 ```java
-Response r = wallet.transferPWR("recipientAddress", 1000); 
+ApiResponse r = await wallet.TransferPWR("recipientAddress", amount); 
 
-if(r.isSuccess()) {
-   System.out.pruintln("Transcation Hash: " + r.getMessage());
+if(r.isSuccess) {
+   Console.WriteLine("Transcation Hash: " + r.getMessage());
 } else {
-   System.out.pruintln("Error: " + r.getError());
+   Console.WriteLine("Error: " + r.Error);
 }
 ```
 
@@ -105,38 +100,30 @@ if(r.isSuccess()) {
 ```java
 uint vmId = 123;
 byte[] data = ...;
-Response r = wallet.sendVmDataTxn(vmId, data);
+var r = await wallet.SendVmDataTxn(vmId, data);
 
-if(r.isSuccess()) {
-   System.out.pruintln("Transcation Hash: " + r.getMessage());
+if(r.isSuccess)) {
+    Console.WriteLine("Transcation Hash: " + r.getMessage());
 } else {
-   System.out.pruintln("Error: " + r.getError());
+    Console.WriteLine("Error: " + r.getError());
 }
 ```
-### Other Static Calls
+### Other Method Calls
 
 **Update fee per byte:**
 
 Fetches latest fee-per-byte rate from the RPC node and updates the local fee rate.
 
 ```java
-PWRJ.updateFeePerByte();
+await sdk.UpdateFeePerByte();
 ``` 
-
-**Get RPC Node Url:**
-
-Returns currently set RPC node URL.
-
-```java
-String url = PWRJ.getRpcNodeUrl();
-```
 
 **Get Fee Per Byte: **
 
 Gets the latest fee-per-byte rate.
 
 ```java
-ulong fee = PWRJ.getFeePerByte();
+ulong fee = await sdk.GetFeePerByte();
 ```
 
 **Get Balance Of Address:**
@@ -144,7 +131,7 @@ ulong fee = PWRJ.getFeePerByte();
 Gets the balance of a specific address.
 
 ```java
-ulong balance = PWRJ.getBalanceOfAddress("0x...");
+ulong balance = await sdk.GetBalanceOfAddress("0x...");
 ```
 
 **Get Nonce Of Address:**
@@ -152,7 +139,7 @@ ulong balance = PWRJ.getBalanceOfAddress("0x...");
 Gets the nonce/transaction count of a specific address.
 
 ```java
-uint nonce = PWRJ.getNonceOfAddress("0x..."); 
+uint nonce = await sdk.GetNonceOfAddress("0x..."); 
 ```
 
 **Broadcast Txn:**
@@ -161,7 +148,7 @@ Broadcasts a signed transaction to the network.
 
 ```java
 byte[] signedTransaction = ...;
-PWRJ.broadcastTxn(signedTransaction);
+await sdk.GroadcastTxn(signedTransaction);
 ```
 
 ## Contributing
