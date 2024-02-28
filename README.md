@@ -90,7 +90,7 @@ If the transaction was a success, you can retrieive the transaction hash, if it 
 ApiResponse r = await wallet.TransferPWR("recipientAddress", amount); 
 
 if(r.isSuccess) {
-   Console.WriteLine("Transcation Hash: " + r.getMessage());
+   Console.WriteLine("Transcation Hash: " + r.Message);
 } else {
    Console.WriteLine("Error: " + r.Error);
 }
@@ -103,9 +103,9 @@ byte[] data = ...;
 var r = await wallet.SendVmDataTxn(vmId, data);
 
 if(r.isSuccess)) {
-    Console.WriteLine("Transcation Hash: " + r.getMessage());
+    Console.WriteLine("Transcation Hash: " + r.Message);
 } else {
-    Console.WriteLine("Error: " + r.getError());
+    Console.WriteLine("Error: " + r.Error);
 }
 ```
 ### Other Method Calls
