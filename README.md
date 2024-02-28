@@ -57,25 +57,25 @@ var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 You also have the flexibility to import existing wallets using a variety of constructors
 ```java
 string privateKey = "private key"; //Replace with hex private key
-var wallet = new PWRWallet(sdk,privateKey); 
+var wallet = new PwrWallet(sdk,privateKey); 
 ```
 ```java
 BigInteger privateKey = BigInteger.Parse("...");
-var wallet = new PWRWallet(sdk,privateKey); 
+var wallet = new PwrWallet(sdk,privateKey); 
 ```
 ```java
 EthECKey ecKey = ...; //Generate or import ecKey 
-var wallet = new PWRWallet(sdk,ecKey); 
+var wallet = new PwrWallet(sdk,ecKey); 
 ```
 
 **Get wallet address:**
 ```java
-string address = await wallet.getAddress();
+string address = await wallet.GetAddress();
 ```
 
 **Get wallet balance:**
 ```java
-ulong balance = await wallet.getBalance();
+ulong balance = await wallet.GetBalance();
 ```
 
 **Transfer PWR tokens:**
