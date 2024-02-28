@@ -30,7 +30,7 @@ PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` f
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PWRCS.Json" Version="13.0.1" />
+    <PackageReference Include="com.github.pwrlabs.pwrcs" Version="13.0.1" />
   </ItemGroup>
 
 </Project>
@@ -41,7 +41,7 @@ PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` f
 
 **Import the library:**
 ```csharp 
-using com.github.pwrlabs.pwrj.*;
+using com.github.pwrlabs.pwrcs.*;
 ```
 
 **Set your RPC node:**
