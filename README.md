@@ -118,7 +118,7 @@ Fetches latest fee-per-byte rate from the RPC node and updates the local fee rat
 await sdk.UpdateFeePerByte();
 ``` 
 
-**Get Fee Per Byte: **
+**Get Fee Per Byte:**
 
 Gets the latest fee-per-byte rate.
 
