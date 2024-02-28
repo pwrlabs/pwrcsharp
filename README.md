@@ -40,36 +40,36 @@ PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` f
 ### Usage
 
 **Import the library:**
-```java 
+```csharp 
 using com.github.pwrlabs.pwrj.*;
 ```
 
 **Set your RPC node:**
-```java
+```csharp
 var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 ```
 
 **Generate a new wallet:** 
-```java
+```csharp
  var wallet = new PwrWallet(sdk);
 ```
 
 You also have the flexibility to import existing wallets using a variety of constructors
-```java
+```csharp
 string privateKey = "private key"; //Replace with hex private key
 var wallet = new PwrWallet(sdk,privateKey); 
 ```
-```java
+```csharp
 BigInteger privateKey = BigInteger.Parse("...");
 var wallet = new PwrWallet(sdk,privateKey); 
 ```
-```java
+```csharp
 EthECKey ecKey = ...; //Generate or import ecKey 
 var wallet = new PwrWallet(sdk,ecKey); 
 ```
 
 **Get wallet address:**
-```java
+```csharp
 string address = await wallet.GetAddress();
 ```
 
@@ -79,14 +79,14 @@ ulong balance = await wallet.GetBalance();
 ```
 
 **Transfer PWR tokens:**
-```java
+```csharp
 var response = await wallet.TransferPWR("recipientAddress", amount); 
 ```
 
 Sending a transcation to the PWR Chain returns a ApiResponse object, which specified if the transaction was a success, and returns relevant data.
 If the transaction was a success, you can retrieive the transaction hash, if it failed, you can fetch the error.
 
-```java
+```csharp
 ApiResponse r = await wallet.TransferPWR("recipientAddress", amount); 
 
 if(r.isSuccess) {
@@ -97,7 +97,7 @@ if(r.isSuccess) {
 ```
 
 **Send data to a VM:**
-```java
+```csharp
 uint vmId = 123;
 byte[] data = ...;
 var r = await wallet.SendVmDataTxn(vmId, data);
@@ -114,7 +114,7 @@ if(r.isSuccess)) {
 
 Fetches latest fee-per-byte rate from the RPC node and updates the local fee rate.
 
-```java
+```csharp
 await sdk.UpdateFeePerByte();
 ``` 
 
@@ -122,7 +122,7 @@ await sdk.UpdateFeePerByte();
 
 Gets the latest fee-per-byte rate.
 
-```java
+```csharp
 ulong fee = await sdk.GetFeePerByte();
 ```
 
@@ -130,7 +130,7 @@ ulong fee = await sdk.GetFeePerByte();
 
 Gets the balance of a specific address.
 
-```java
+```csharp
 ulong balance = await sdk.GetBalanceOfAddress("0x...");
 ```
 
@@ -138,7 +138,7 @@ ulong balance = await sdk.GetBalanceOfAddress("0x...");
 
 Gets the nonce/transaction count of a specific address.
 
-```java
+```csharp
 uint nonce = await sdk.GetNonceOfAddress("0x..."); 
 ```
 
@@ -146,7 +146,7 @@ uint nonce = await sdk.GetNonceOfAddress("0x...");
 
 Broadcasts a signed transaction to the network.
 
-```java
+```csharp
 byte[] signedTransaction = ...;
 await sdk.GroadcastTxn(signedTransaction);
 ```
