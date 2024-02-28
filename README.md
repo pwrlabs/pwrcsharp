@@ -148,7 +148,7 @@ Broadcasts a signed transaction to the network.
 
 ```csharp
 byte[] signedTransaction = ...;
-await sdk.GroadcastTxn(signedTransaction);
+await sdk.BroadcastTxn(signedTransaction);
 ```
 
 ## Contributing
