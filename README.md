@@ -30,7 +30,7 @@ PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` f
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="com.github.pwrlabs.pwrcs" Version="13.0.1" />
+    <PackageReference Include="PWRCS" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
@@ -102,7 +102,7 @@ uint vmId = 123;
 byte[] data = ...;
 var r = await wallet.SendVmDataTxn(vmId, data);
 
-if(r.isSuccess)) {
+if(r.isSuccess) {
     Console.WriteLine("Transcation Hash: " + r.Message);
 } else {
     Console.WriteLine("Error: " + r.Error);
