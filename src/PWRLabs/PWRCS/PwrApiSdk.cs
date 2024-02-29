@@ -416,31 +416,43 @@ public class PwrApiSdk
             var jsonBlock = JsonConvert.DeserializeObject<JObject>(json);
             ulong timestamp = jsonBlock.Value<ulong>("timestamp");
            var blockInstance = new Block(
-                    transactionCount: jsonBlock.Value<uint>("transactionCount"),
-                    size: jsonBlock.Value<uint>("blockSize"),
-                    number: jsonBlock.Value<uint>("blockNumber"),
-                    reward: jsonBlock.Value<ulong>("blockReward"),
-                    timestamp: timestamp,
-                    hash: jsonBlock.Value<string>("blockHash"),
-                    submitter: jsonBlock.Value<string>("blockSubmitter"),
-                    success: jsonBlock.Value<bool>("success"),
-                    transactions : jsonBlock["transactions"].Select(t => new Transaction(
-                        blockNumber : t.Value<ulong>("blockNumber"),
-                        size: t.Value<uint>("size"),
-                        hash: t.Value<string>("hash"),
-                        fee: t.Value<ulong>("fee"),
-                        fromAddress: t.Value<string>("sender"),
-                        to: t.Value<string>("receiver"),
-                        nonce: t.Value<uint>("nonce"),
-                        positionintheBlock: t.Value<uint>("positionInTheBlock"),
-                        type: t.Value<string>("type"),
-                        value : t.Value<ulong>("value"),
-                        timestamp : timestamp
-                    )).ToList()
-                );
+        transactionCount: jsonBlock.Value<uint>("transactionCount"),
+        size: jsonBlock.Value<uint>("blockSize"),
+        number: jsonBlock.Value<uint>("blockNumber"),
+        reward: jsonBlock.Value<ulong>("blockReward"),
+        timestamp: timestamp,
+        hash: jsonBlock.Value<string>("blockHash"),
+        submitter: jsonBlock.Value<string>("blockSubmitter"),
+        success: jsonBlock.Value<bool>("success"),
+        transactions: jsonBlock["transactions"].Select(t =>
+            DeserializeTransaction(t.Value<string>("type"), t, new Newtonsoft.Json.JsonSerializer())
+        ).ToList()
+    );
                 return blockInstance;
           
     }
+
+    public Transaction DeserializeTransaction(string type, JToken jsonObject, Newtonsoft.Json.JsonSerializer serializer)
+{
+   
+    switch (type)
+    {
+        case "claimvlmdtxn.type":
+            return jsonObject.ToObject<ClaimVlmdTxn>(serializer);
+        case "delegatetxn.type":
+            return jsonObject.ToObject<DelegateTxn>(serializer);
+        case "jointxn.type":
+            return jsonObject.ToObject<JoinTxn>(serializer);
+        case "transfertxn.type":
+            return jsonObject.ToObject<TransferTxn>(serializer);
+        case "vmdatatxn.type":
+            return jsonObject.ToObject<VmDataTxn>(serializer);
+        case "transaction.type":
+            return jsonObject.ToObject<WithdrawTxn>(serializer);
+        default:
+            return jsonObject.ToObject<Transaction>(serializer);
+    }
+}
     /// <summary>
     /// Retrieves the total count of validators on the blockchain.
     /// </summary>

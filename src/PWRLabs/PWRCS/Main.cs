@@ -10,7 +10,7 @@ var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
    
 try{
      var wallet = new PwrWallet(sdk, "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
-
+     
        uint nonce = await wallet.GetNonce();
         Console.WriteLine(nonce);
         var r = await wallet.TransferPWR("0x8953f1c3B53Bd9739F78dc8B0CD5DB9686C40b09", 1000000000, nonce);
