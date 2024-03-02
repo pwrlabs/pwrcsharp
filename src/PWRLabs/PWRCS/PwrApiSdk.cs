@@ -217,7 +217,7 @@ public class PwrApiSdk
 
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-
+            
           return null;
     }
     /// <summary>
@@ -228,11 +228,21 @@ public class PwrApiSdk
     public  async Task<Validator> GetValidator(string validatorAddress)  {
         ValidateAddress(validatorAddress);
          
-            var url = $"{_rpcNodeUrl}/activeVotingPower/";
+            var url = $"{_rpcNodeUrl}/validator/?validatorAddress={validatorAddress}";
             var response = await Request(url);
             var responseData = JsonConvert.DeserializeObject<JObject>(response);
-
-           return null;
+            var token = JsonConvert.DeserializeObject<JObject>(responseData["validator"].ToString());
+            var validator = new Validator(
+                    address : token["address"].Value<string>(),
+                    ip : token["ip"]?.Value<string>() ?? "",
+                    badActor : token["badActor"]?.Value<bool>() ?? false,
+                    votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
+                    shares : token["totalShares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
+                    status : token["status"]?.Value<string>() ?? "active",
+                    httpClient : _httpClient
+            );
+           return validator;
         
     }
 

@@ -29,7 +29,7 @@ public class Validator
 
     [JsonProperty("delegators")]    
     [JsonConverter(typeof(DelegatorConverter))]
-    public List<Delegator> Delegators {get;private set;}
+    public List<Delegator>? Delegators {get;private set;}
     
     private readonly HttpClient _httpClient;
 

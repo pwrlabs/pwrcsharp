@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Util;
 using Newtonsoft.Json;
@@ -9,16 +10,14 @@ using PWRCS.Models;
 var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
    
 try{
+
      var wallet = new PwrWallet(sdk, "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
-     
        uint nonce = await wallet.GetNonce();
-        Console.WriteLine(nonce);
         var r = await wallet.TransferPWR("0x8953f1c3B53Bd9739F78dc8B0CD5DB9686C40b09", 1000000000, nonce);
         Console.WriteLine("Transfer PWR success: " + r.Success);
         Console.WriteLine("Transfer PWR txn hash: " + r.TxnHash);
         Console.WriteLine("Transfer PWR error: " + r.Error);
         Console.WriteLine();
-        Console.WriteLine(await wallet.GetNonce());
         ++nonce;
         r = await wallet.Delegate("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 1000000000, nonce);
         Console.WriteLine("Delegate success: " + r.Success);

@@ -37,17 +37,7 @@ public class Block
         Transactions = transactions;
     }
 
-    public Block(uint transactionCount, uint size, uint number, ulong reward, ulong timestamp, string hash, string submitter, bool success)
-    {
-        TransactionCount = transactionCount;
-        Size = size;
-        Number = number;
-        Reward = reward;
-        Timestamp = timestamp;
-        Hash = hash;
-        Submitter = submitter;
-        Success = success;
-    }
+   
 
     public override string ToString()
         {

@@ -33,10 +33,9 @@ public class PwrWallet
 
         PublicAddress = _ecKey.GetPublicAddress();
         
-        Console.WriteLine("Private Key as Hex: " + PrivateKeyHex);
-        Console.WriteLine("Private key BigInteger : " + BigInteger.Parse(privateKeyHex, System.Globalization.NumberStyles.HexNumber).ToString());
-        Console.WriteLine("Public Key: " + PublicKeyHex);
-        Console.WriteLine("Public Address: " + PublicAddress);
+        Console.WriteLine("Private Key as Hex : " + PrivateKeyHex);
+        Console.WriteLine("Public Key as Hex : " + PublicKeyHex);
+        Console.WriteLine("Public Address : " + PublicAddress);
     }
     catch (Exception ex)
     {
@@ -51,12 +50,15 @@ public class PwrWallet
     public PwrWallet(PwrApiSdk apiSdk, EthECKey key)
     {
         _apiSdk = apiSdk;
-
+        _ecKey = key;
         PrivateKeyHex = key.GetPrivateKeyAsBytes().ToHex();
         PublicKeyHex = key.GetPubKey().ToHex();
 
         PublicAddress = key.GetPublicAddress();
     }
+
+    public PwrWallet(PwrApiSdk apiSdk, byte[] privateKey) : this(apiSdk, BitConverter.ToString(privateKey).Replace("-", "").ToLower())
+    {}
 
     public string PrivateKeyHex { get; }
 
@@ -401,10 +403,12 @@ public class PwrWallet
     public async Task<byte[]> GetWithdrawPWRTxn(string from, ulong pwrAmount, uint nonce)
     {
        ValidateAddress(from);
-            from = from.Substring(2);
+        from = from.Substring(2);
+
 
         BigDecimal shareValue = await _apiSdk.GetShareValue(from);
-        ulong sharesAmount = (ulong)(pwrAmount / 5 /*share value*/ );
+        BigDecimal pwrAmountBig = new BigDecimal(pwrAmount);
+        ulong sharesAmount = (ulong)(pwrAmountBig / shareValue);
 
         if (sharesAmount <= 0)
         {
@@ -632,10 +636,8 @@ public class PwrWallet
             throw new ArgumentException("Expiry date cannot be in the past");
         }
 
-        if (guardianAddress.Length == 42)
-        {
-            guardianAddress = guardianAddress.Substring(2);
-        }
+        guardianAddress = guardianAddress.Substring(2);
+        
 
         byte[] txnBase = await GetTxnBase(8, nonce);
         byte[] guardianAddressBytes = Extensions.HexStringToByteArray(guardianAddress);
@@ -842,4 +844,45 @@ public class PwrWallet
         }
     }
     
+    public static string GetPublicKeyFromPrivateKey(byte[] privateKey)
+    {
+         if (privateKey.Length != 32)
+        {
+            throw new ArgumentException("Private key must be a 64-character hexadecimal string.");
+        }
+        EthECKey ethECKey = new EthECKey(privateKey, true);
+
+        string publicKeyHex = ethECKey.GetPubKey().ToHex();
+
+        return publicKeyHex;
+    }
+    public static string GetPublicKeyFromPrivateKey(string privateKey)
+    {
+        byte[] privateKeyBytes = Extensions.HexStringToByteArray(privateKey);
+       return GetPublicKeyFromPrivateKey(privateKeyBytes);
+    }
+    public static string GetPublicKeyFromPrivateKey(BigInteger privateKey)
+    {
+        byte[] privateKeyBytes = Extensions.HexStringToByteArray(
+        BitConverter.ToString(privateKey.ToByteArray()).Replace("-", "").ToLower());
+       return GetPublicKeyFromPrivateKey(privateKeyBytes);
+    }
+
+    public static string PublicKeyToAddress(byte[] publicKey)
+    {
+        var eth = new EthECKey(publicKey,false);
+        return eth.GetPublicAddress();
+    }
+    public static string PublicKeyToAddress(string publicKey)
+    {
+        return PublicKeyToAddress(Extensions.HexStringToByteArray(publicKey));
+    }
+    public static string PublicKeyToAddress(BigInteger publicKey)
+    {
+          byte[] publicKeyBytes = Extensions.HexStringToByteArray(
+        BitConverter.ToString(publicKey.ToByteArray()).Replace("-", "").ToLower());
+        return PublicKeyToAddress(publicKeyBytes);
+    }
 }
+
+  
