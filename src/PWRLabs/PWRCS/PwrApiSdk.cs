@@ -212,13 +212,24 @@ public class PwrApiSdk
     public  async Task<List<Validator>> GetDelegatees(string address)  {
         ValidateAddress(address);
             var url = $"{_rpcNodeUrl}/delegateesOfUser/?userAddress={address}";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-            
-          return null;
+            var response = await Request(url);
+            var responseData = JsonConvert.DeserializeObject<JObject>(response);
+            var tk = JsonConvert.DeserializeObject<JArray>(responseData["delegatees"].ToString());
+            List<Validator> validators = new List<Validator>();
+            foreach(var token in tk){
+            var validator = new Validator(
+                    address : token["address"].Value<string>(),
+                    ip : token["ip"]?.Value<string>() ?? "",
+                    badActor : token["badActor"]?.Value<bool>() ?? false,
+                    votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
+                    shares : token["totalShares"]?.Value<ulong>() ?? 0,
+                    delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
+                    status : token["status"]?.Value<string>() ?? "active",
+                    httpClient : _httpClient
+            );
+            validators.Add(validator);
+            }
+          return validators;
     }
     /// <summary>
     /// Retrieves the validator information for the specified validator address.
@@ -441,7 +452,6 @@ public class PwrApiSdk
                 return blockInstance;
           
     }
-
     public Transaction DeserializeTransaction(string type, JToken jsonObject, Newtonsoft.Json.JsonSerializer serializer)
 {
    

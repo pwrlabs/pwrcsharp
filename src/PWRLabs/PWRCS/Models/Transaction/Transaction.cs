@@ -21,10 +21,10 @@ public class Transaction
     public string Type { get; }
     [JsonProperty("sender")]
 
-    public string FromAddress { get; }
-    [JsonProperty("to")]
+    public string Sender { get; }
+    [JsonProperty("receiver")]
 
-    public string To { get; }
+    public string Receiver { get; }
     [JsonProperty("nonce")]
 
     public uint Nonce { get; }
@@ -43,8 +43,8 @@ public class Transaction
      uint positionintheBlock,
       ulong fee,
        string type,
-        string fromAddress,
-         string to,
+        string sender,
+         string receiver,
           uint nonce,
            string hash,
            ulong value,
@@ -56,20 +56,17 @@ public class Transaction
         PositionintheBlock = positionintheBlock;
         Fee = fee;
         Type = type;
-        FromAddress = fromAddress;
-        To = to;
+        Sender = sender;
+        Receiver = receiver;
         Nonce = nonce;
         Hash = hash;
         Value = value;
         TimeStamp = timestamp;
     }
 
-    public Transaction()
-    {
-    }
-
+    
     public override string ToString()
         {
-            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionuintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, FromAddress={FromAddress}, To={To}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}";
+            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, Sender={Sender}, Receiver={Receiver}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}";
         }
 }

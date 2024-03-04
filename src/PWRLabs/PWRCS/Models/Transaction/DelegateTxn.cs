@@ -6,12 +6,16 @@ public class DelegateTxn : Transaction
 {
     [JsonProperty("validator")]
     public string Validator {get;}
-    [JsonProperty("amount")]
-    public ulong amount {get;}
-    public DelegateTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string fromAddress, string to, uint nonce , string hash,ulong value, ulong timestamp,string validator,ulong amount)
-     : base(size, blockNumber, positionintheBlock, fee, type, fromAddress, to, nonce, hash,value, timestamp)
+
+    
+    public DelegateTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string sender, string receiver, uint nonce, string hash,ulong value,ulong timestamp,string validator)
+     : base(size, blockNumber, positionintheBlock, fee, type, sender, receiver, nonce, hash,value, timestamp)
     {
         this.Validator = validator;
-        this.amount = amount ;
     }
+
+     public override string ToString()
+        {
+            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, Sender={Sender}, Receiver={Receiver}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}, Validator={Validator}";
+        }
 }

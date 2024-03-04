@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
+using System.Security.Cryptography;
 using Nethereum.Util;
 
 namespace PWRCS;
@@ -26,4 +27,6 @@ public class Signer
         
         return signatureString.HexToByteArray();
     }
+
+   
 }
