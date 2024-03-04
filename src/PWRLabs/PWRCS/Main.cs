@@ -9,10 +9,7 @@ using PWRCS;
 using PWRCS.Models;
 var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 
-var list = await sdk.GetDelegatees("0x8FD3848178DD2FDDA45FE4EFC39661DC70216BDA");
-foreach(var s in list){
-     Console.WriteLine(s.ToString());
-}
+
 try{
 
      var wallet = new PwrWallet(sdk, "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");

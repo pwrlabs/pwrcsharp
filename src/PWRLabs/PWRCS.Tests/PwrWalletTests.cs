@@ -97,11 +97,20 @@ public class PwrWalletTests
         Assert.True(r.Success);
     }
 
+     [Fact]
+    public async Task TestSendPayableVmDataTxn()
+    {   
+        ulong vmId = 897435;
+        var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
+        var r = await wallet.SendPayableVmDataTxn(vmId, 10, Encoding.UTF8.GetBytes("Hello World"), await wallet.GetNonce());
+        Assert.True(r.Success);
+    }
+
     [Fact]
     public async Task TestSetGuardian()
     {
         var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"), "5051f367aa1dc81294b711a716cc08c096ad61783c89636081a8ea92828a0f58");
-       var r = await wallet.SetGuardian("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", 1000000000);
+       var r = await wallet.SetGuardian("0x61Bd8fc1e30526Aaf1C4706Ada595d6d236d9883", (ulong)DateTimeOffset.Now.ToUnixTimeSeconds() + 100000);
         Assert.True(r.Success);
     }
 

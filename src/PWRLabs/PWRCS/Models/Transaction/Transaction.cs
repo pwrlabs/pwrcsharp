@@ -9,7 +9,7 @@ public class Transaction
     public uint Size { get; }
 
     [JsonProperty("blockNumber")]
-    public ulong BlockNumber {get;}
+    public ulong BlockNumber {get;set;}
     [JsonProperty("positionInTheBlock")]
 
     public uint PositionintheBlock { get; }
@@ -36,7 +36,7 @@ public class Transaction
     public ulong Value {get;}
 
     [JsonProperty("timestamp")]
-    public ulong TimeStamp {get;}
+    public ulong TimeStamp {get;set;}
 
     public Transaction(uint size,
     ulong blockNumber,

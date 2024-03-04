@@ -826,6 +826,34 @@ public class PwrWallet
     public async Task<WalletResponse> SendValidatorRemoveTxn(string validator){
         return await SendValidatorRemoveTxn(validator,await GetNonce());
     }
+
+    public async Task<WalletResponse> SendPayableVmDataTxn(ulong vmId,ulong value,byte[] data,uint nonce){
+          byte[] signed = await GetSignedPayableVmDataTxn(vmId,value,data,nonce);
+          return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed),signed);
+    }
+
+    private async Task<byte[]> GetSignedPayableVmDataTxn(ulong vmId, ulong value, byte[] data, uint nonce)
+    {
+        return GetSignedTxn(await GetPayableVmDataTxn(vmId,value,data,nonce));
+    }
+
+    private async Task<byte[]> GetPayableVmDataTxn(ulong vmId, ulong value, byte[] data, uint nonce)
+    {
+        if(nonce < await GetNonce()) throw new ArgumentException("Nonce is too low .");
+        byte[] txnBase = await GetTxnBase(5,nonce);
+        MemoryStream stream = new MemoryStream(txnBase.Length + 16 + data.Length);
+        stream.Write(txnBase,0,txnBase.Length);
+        byte[] vmIdBytes = BitConverter.GetBytes(vmId);
+        Array.Reverse(vmIdBytes);
+        stream.Write(vmIdBytes,0,vmIdBytes.Length);
+        stream.Write(data,0,vmIdBytes.Length);
+        byte[] valueBytes = BitConverter.GetBytes(value);
+        Array.Reverse(vmIdBytes);
+        stream.Write(valueBytes,0,vmIdBytes.Length);
+        return stream.ToArray();
+
+    }
+
     public void ValidateAddress(string address)
     {
         if (string.IsNullOrEmpty(address))
@@ -882,6 +910,11 @@ public class PwrWallet
           byte[] publicKeyBytes = Extensions.HexStringToByteArray(
         BitConverter.ToString(publicKey.ToByteArray()).Replace("-", "").ToLower());
         return PublicKeyToAddress(publicKeyBytes);
+    }
+
+    public async Task SetGuardian(string v1, long v2)
+    {
+        throw new NotImplementedException();
     }
 }
 

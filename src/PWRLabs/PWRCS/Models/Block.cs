@@ -35,6 +35,10 @@ public class Block
         Submitter = submitter;
         Success = success;
         Transactions = transactions;
+        foreach(var txn in transactions){
+            txn.TimeStamp = timestamp;
+            txn.BlockNumber = number;
+        }
     }
 
    
@@ -44,6 +48,7 @@ public class Block
             string txnInfo = "";
             foreach(Transaction tx in Transactions){
                 txnInfo += tx.ToString();
+                txnInfo += Environment.NewLine;
             }
            
             return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}{txnInfo}";

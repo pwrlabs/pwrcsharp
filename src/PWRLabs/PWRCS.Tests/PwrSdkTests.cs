@@ -219,5 +219,13 @@ public class PwrSdkTests
         var r = await sdk.GetValidator("0x8FD3848178DD2FDDA45FE4EFC39661DC70216BDA");
         Assert.Equal("8FD3848178DD2FDDA45FE4EFC39661DC70216BDA",r.Address); 
     }
+
+    [Fact]
+    public async Task TestGetDelegatees()
+    {
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetDelegatees("0x8FD3848178DD2FDDA45FE4EFC39661DC70216BDA");
+        Assert.True(r.Any()); 
+    }
       
 }

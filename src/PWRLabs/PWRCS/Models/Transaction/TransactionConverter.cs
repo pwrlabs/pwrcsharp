@@ -5,6 +5,10 @@ using PWRCS.Models;
 
 public class TransactionConverter : JsonConverter
 {
+    public ulong TimeStamp {get;}
+    public TransactionConverter(ulong timestamp){
+        TimeStamp = timestamp;
+    }
     public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Transaction);
@@ -17,17 +21,29 @@ public class TransactionConverter : JsonConverter
 
             switch (type)
             {
-                case "Validator Claim Spot":
-                    return jsonObject.ToObject<ClaimVlmdTxn>(serializer);
                 case "VM Data":
-                    return jsonObject.ToObject<DelegateTxn>(serializer);
-                 case "join":
-                    return jsonObject.ToObject<JoinTxn>(serializer);
-                 case "transfer":
-                    return jsonObject.ToObject<TransferTxn>(serializer);
-                 case "vmdatatxn":
                     return jsonObject.ToObject<VmDataTxn>(serializer);
-                 case "withdraw":
+                case "Set Guardian":
+                    return jsonObject.ToObject<SetGuardianTxn>(serializer);
+                case "Remove Guardian":
+                    return jsonObject.ToObject<RemoveGuardianTxn>(serializer);
+                case "Guardian Approval":
+                    return jsonObject.ToObject<GuardianApprovalTxn>(serializer);
+                case "Validator Claim Spot":
+                    return jsonObject.ToObject<ClaimSpotTxn>(serializer);
+                case "Payable VM Data":
+                    return jsonObject.ToObject<PayableVmDataTxn>(serializer);
+                case "Claim VM ID":
+                    return jsonObject.ToObject<ClaimVlmdTxn>(serializer);
+                case "Conduit Approval":
+                    return jsonObject.ToObject<ConduitApprovalTxn >(serializer);  
+                case "Delegate":
+                    return jsonObject.ToObject<DelegateTxn>(serializer);
+                 case "Validator Join":
+                    return jsonObject.ToObject<JoinTxn>(serializer);
+                 case "Transfer":
+                    return jsonObject.ToObject<TransferTxn>(serializer);
+                 case "Withdraw":
                     return jsonObject.ToObject<WithdrawTxn>(serializer);
                 default:
                    return jsonObject.ToObject<Transaction>(serializer);
