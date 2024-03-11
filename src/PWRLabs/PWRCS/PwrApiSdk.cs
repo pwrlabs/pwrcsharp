@@ -699,6 +699,55 @@ public class PwrApiSdk
            
        
     }
+/// <summary>
+/// Checks if a transaction is valid for guardian approval by querying a remote RPC node.
+/// </summary>
+/// <param name="txn">The transaction data represented as a hex String.</param>
+/// <returns>
+/// A <see cref="Task<TxnForGuardianApproval>"/> representing the asynchronous operation. The task result is a <see cref="TxnForGuardianApproval"/> object 
+/// containing information about whether the transaction is valid for guardian approval and, if applicable, the transaction details.
+/// </returns>
+/// /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or response processing.</exception>
+    public async Task<TxnForGuardianApproval> IsTransactionValidForGuardianApproval(string txn){
+        return await IsTransactionValidForGuardianApproval(txn.HexToByteArray());
+    }
+    /// <summary>
+/// Checks if a transaction is valid for guardian approval by querying a remote RPC node.
+/// </summary>
+/// <param name="txn">The transaction data represented as a byte array.</param>
+/// <returns>
+/// A <see cref="Task<TxnForGuardianApproval>"/> representing the asynchronous operation. The task result is a <see cref="TxnForGuardianApproval"/> object 
+/// containing information about whether the transaction is valid for guardian approval and, if applicable, the transaction details.
+/// </returns>
+/// /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or response processing.</exception>
+    public async Task<TxnForGuardianApproval> IsTransactionValidForGuardianApproval(byte[] txn){
+        try{
+            var url = $"{_rpcNodeUrl}/isTransactionValidForGuardianApproval/";
+            var payload = new { transaction = txn.ToHex() };
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            Console.WriteLine(JsonConvert.SerializeObject(payload).ToString());
+            var response = await _httpClient.PostAsync(url, content);
+            if(response.IsSuccessStatusCode){
+            var responseString = await response.Content.ReadAsStringAsync();
+    
+            if (string.IsNullOrWhiteSpace(responseString))
+                return new TxnForGuardianApproval(false, "The response from the RPC node was empty.",null);
+
+            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            bool isValid = responseData["valid"]?.Value<bool>() ?? false;
+            Transaction transaction = JsonConvert.DeserializeObject<Transaction>( responseData["transaction"].ToString());
+            return new TxnForGuardianApproval(true,null,transaction);
+            }else{
+                  var responseString = await response.Content.ReadAsStringAsync();
+                
+                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
+                var error = $"Error : {Environment.NewLine} Status Code : {response.StatusCode} {Environment.NewLine} Message : {errorMessage}";
+                return new TxnForGuardianApproval(false,errorMessage ?? "Unknown error",null);       
+            }
+        }catch(Exception e){
+            return new TxnForGuardianApproval(false,e.Message,null);
+        }
+    }
 
 /// <summary>
 /// Validates the format of an address.

@@ -912,10 +912,7 @@ public class PwrWallet
         return PublicKeyToAddress(publicKeyBytes);
     }
 
-    public async Task SetGuardian(string v1, long v2)
-    {
-        throw new NotImplementedException();
-    }
+    
 }
 
   
