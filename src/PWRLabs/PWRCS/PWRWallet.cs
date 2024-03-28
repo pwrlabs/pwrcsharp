@@ -826,6 +826,143 @@ public class PwrWallet
     public async Task<WalletResponse> SendValidatorRemoveTxn(string validator){
         return await SendValidatorRemoveTxn(validator,await GetNonce());
     }
+    public async Task<byte[]> GetConduitApprovalTxn(ulong vmId ,List<byte[]> txns,uint nonce){
+        if (txns.Count == 0 ) throw new ArgumentException("Txns list is empty.");
+        int totalTxnsLength = 0;
+        foreach(byte[] txn in txns){
+            totalTxnsLength += txn.Length;
+        }
+        byte[] txnBase = await GetTxnBase(12,nonce);
+        using MemoryStream stream = new MemoryStream(txnBase.Length + 8 + (txns.Count * 4) + totalTxnsLength);
+        stream.Write(txnBase);
+        byte[] vmIdArr = BitConverter.GetBytes(vmId);
+        Array.Reverse(vmIdArr);
+        foreach (byte[] txn in txns)
+        {
+            byte[] lenghArr = BitConverter.GetBytes(txn.Length);
+            Array.Reverse(lenghArr);
+            stream.Write(lenghArr);
+            stream.Write(txn);
+        }
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> GetSignedConduitApprovalTxn(ulong vmId ,List<byte[]> txns,uint nonce){
+       return GetSignedTxn(await GetConduitApprovalTxn(vmId,txns,nonce));
+    }
+
+    public async Task<ApiResponse> ConduitApprove(ulong vmId, List<byte[]> transactions, uint nonce)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedConduitApprovalTxn(vmId, transactions, nonce));
+    }
+
+    public async Task<ApiResponse> ConduitApprove(ulong vmId, List<byte[]> transactions)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedConduitApprovalTxn(vmId, transactions, await GetNonce()));
+    }
+
+    public async Task<byte[]> GetSetConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+        if (conduits.Count == 0 ) throw new ArgumentException("Conduits list is empty.");
+        int totalConduitsLenght= 0;
+
+        foreach(byte[] txn in conduits){
+            totalConduitsLenght += txn.Length;
+        }
+
+        byte[] txnBase = await GetTxnBase(13,nonce);
+        using MemoryStream stream = new MemoryStream(txnBase.Length + 8 + (conduits.Count * 4) + totalConduitsLenght);
+        stream.Write(txnBase);
+        byte[] vmIdArr = BitConverter.GetBytes(vmId);
+        Array.Reverse(vmIdArr);
+        foreach (byte[] conduit in conduits)
+        {
+            byte[] lenghArr = BitConverter.GetBytes(conduit.Length);
+            Array.Reverse(lenghArr);
+            stream.Write(lenghArr);
+            stream.Write(conduit);
+        }
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> GetSignedSetConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+        return GetSignedTxn(await GetSetConduitsTxn(vmId,conduits,nonce));
+    }
+
+
+    public async Task<ApiResponse> SetConduits(ulong vmId, List<byte[]> conduits,uint nonce)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedSetConduitsTxn(vmId, conduits, nonce));
+    }
+
+    public async Task<ApiResponse> SetConduits(ulong vmId, List<byte[]> conduits)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedSetConduitsTxn(vmId, conduits, await GetNonce()));
+    }
+
+    public async Task<byte[]> GetAddConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+        if (conduits.Count == 0 ) throw new ArgumentException("Conduits list is empty.");
+        int totalConduitsLenght= 0;
+
+        foreach(byte[] txn in conduits){
+            totalConduitsLenght += txn.Length;
+        }
+
+        byte[] txnBase = await GetTxnBase(14,nonce);
+        using MemoryStream stream = new MemoryStream(txnBase.Length + 8 + (conduits.Count * 4) + totalConduitsLenght);
+        stream.Write(txnBase);
+        byte[] vmIdArr = BitConverter.GetBytes(vmId);
+        Array.Reverse(vmIdArr);
+        foreach (byte[] conduit in conduits)
+        {
+            byte[] lenghArr = BitConverter.GetBytes(conduit.Length);
+            Array.Reverse(lenghArr);
+            stream.Write(lenghArr);
+            stream.Write(conduit);
+        }
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> GetSignedAddConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+        return GetSignedTxn(await GetAddConduitsTxn(vmId,conduits,nonce));
+    }
+    public async Task<ApiResponse> AddConduits(ulong vmId, List<byte[]> conduits,uint nonce)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedAddConduitsTxn(vmId, conduits, nonce));
+    }
+
+    public async Task<ApiResponse> AddConduits(ulong vmId, List<byte[]> conduits)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedAddConduitsTxn(vmId, conduits, await GetNonce()));
+    }
+
+    public async Task<byte[]> GetRemoveConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+        if (conduits.Count == 0 ) throw new ArgumentException("Conduits list is empty.");
+        int totalConduitsLenght= 0;
+
+        foreach(byte[] txn in conduits){
+            totalConduitsLenght += txn.Length;
+        }
+
+        byte[] txnBase = await GetTxnBase(15,nonce);
+        using MemoryStream stream = new MemoryStream(txnBase.Length + 8 + (conduits.Count * 4) + totalConduitsLenght);
+        stream.Write(txnBase);
+        byte[] vmIdArr = BitConverter.GetBytes(vmId);
+        Array.Reverse(vmIdArr);
+        foreach (byte[] conduit in conduits)
+        {
+            byte[] lenghArr = BitConverter.GetBytes(conduit.Length);
+            Array.Reverse(lenghArr);
+            stream.Write(lenghArr);
+            stream.Write(conduit);
+        }
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> GetSignedRemoveConduitsTxn(ulong vmId ,List<byte[]> conduits,uint nonce){
+       return GetSignedTxn(await GetRemoveConduitsTxn(vmId,conduits,nonce));
+    }
+
+    public async Task<ApiResponse> RemoveConduits(ulong vmId, List<byte[]> conduits,uint nonce)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedRemoveConduitsTxn(vmId, conduits, nonce));
+    }
+    public async Task<ApiResponse> RemoveConduits(ulong vmId, List<byte[]> conduits)  {
+        return await  _apiSdk.BroadcastTxn(await GetSignedRemoveConduitsTxn(vmId, conduits,await GetNonce()));
+    }
+
 
     public async Task<WalletResponse> SendPayableVmDataTxn(ulong vmId,ulong value,byte[] data,uint nonce){
           byte[] signed = await GetSignedPayableVmDataTxn(vmId,value,data,nonce);

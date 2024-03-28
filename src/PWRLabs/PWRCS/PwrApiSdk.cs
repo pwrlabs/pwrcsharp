@@ -43,7 +43,6 @@ public class PwrApiSdk
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("success");
                 var responseString = await response.Content.ReadAsStringAsync();
                  if (string.IsNullOrWhiteSpace(responseString)) throw new Exception("The response from the RPC node was empty.");
                 return responseString;
@@ -709,6 +708,7 @@ public class PwrApiSdk
 /// </returns>
 /// /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or response processing.</exception>
     public async Task<TxnForGuardianApproval> IsTransactionValidForGuardianApproval(string txn){
+        ValidateTxn(txn);
         return await IsTransactionValidForGuardianApproval(txn.HexToByteArray());
     }
     /// <summary>
@@ -725,27 +725,27 @@ public class PwrApiSdk
             var url = $"{_rpcNodeUrl}/isTransactionValidForGuardianApproval/";
             var payload = new { transaction = txn.ToHex() };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            Console.WriteLine(JsonConvert.SerializeObject(payload).ToString());
             var response = await _httpClient.PostAsync(url, content);
             if(response.IsSuccessStatusCode){
             var responseString = await response.Content.ReadAsStringAsync();
-    
+            Console.WriteLine(responseString);
             if (string.IsNullOrWhiteSpace(responseString))
-                return new TxnForGuardianApproval(false, "The response from the RPC node was empty.",null);
+                return new TxnForGuardianApproval(false, "The response from the RPC node was empty.",null,null);
 
             var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
             bool isValid = responseData["valid"]?.Value<bool>() ?? false;
             Transaction transaction = JsonConvert.DeserializeObject<Transaction>( responseData["transaction"].ToString());
-            return new TxnForGuardianApproval(true,null,transaction);
+            string guardianAddress = responseData["guardian"]?.Value<string>() ?? "";
+            return new TxnForGuardianApproval(true,null,guardianAddress,transaction);
             }else{
                   var responseString = await response.Content.ReadAsStringAsync();
                 
                 var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
                 var error = $"Error : {Environment.NewLine} Status Code : {response.StatusCode} {Environment.NewLine} Message : {errorMessage}";
-                return new TxnForGuardianApproval(false,errorMessage ?? "Unknown error",null);       
+                return new TxnForGuardianApproval(false,errorMessage ?? "Unknown error",null,null);       
             }
         }catch(Exception e){
-            return new TxnForGuardianApproval(false,e.Message,null);
+            return new TxnForGuardianApproval(false,e.Message,null,null);
         }
     }
 
@@ -772,5 +772,15 @@ public class PwrApiSdk
         }
     }   
 
-    
+    public  void ValidateTxn(string txn)
+    {
+        if (txn.Length != 66 || !txn.StartsWith("0x"))
+        {
+            throw new ArgumentException("Invalid Address Format.");
+        }
+        
+        Regex hexPattern = new Regex(@"^0x[a-fA-F0-9]{64}$");
+        if (!hexPattern.IsMatch(txn)) throw new ArgumentException("Invalid Address Format.");
+
+    }
 }

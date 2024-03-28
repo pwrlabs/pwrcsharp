@@ -3,13 +3,15 @@ using PWRCS.Models;
 namespace PWRCS;
 
 public class TxnForGuardianApproval {
-    private bool Valid {get;}
-    private String ErrorMessage {get;}
-    private Transaction Transaction {get;}
+    public bool Valid {get;}
+    public string GuardianAddress{get;}
+    public String ErrorMessage {get;}
+    public Transaction Transaction {get;}
 
-    public TxnForGuardianApproval(bool valid,String errorMessage,Transaction transaction){
+    public TxnForGuardianApproval(bool valid,String errorMessage,string guardianAddress,Transaction transaction){
          Valid = valid;
          ErrorMessage = errorMessage;
          Transaction = transaction;
+         GuardianAddress = guardianAddress;
     }
 }

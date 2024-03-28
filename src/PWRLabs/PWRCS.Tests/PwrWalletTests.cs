@@ -40,8 +40,8 @@ public class PwrWalletTests
     public async Task TestGetBalance()
     {
         var wallet = new PwrWallet(new PwrApiSdk("https://pwrrpc.pwrlabs.io/"));
-        var nonce = await wallet.GetBalance();
-        Assert.Equal(0UL, nonce);
+        var bal = await wallet.GetBalance();
+        Assert.Equal(0UL, bal);
     }    
     
     [Fact]
