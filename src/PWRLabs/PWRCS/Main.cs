@@ -9,6 +9,9 @@ using PWRCS;
 using PWRCS.Models;
 var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 await sdk.GetChainId();
+
+TransactionBuilder builder = new TransactionBuilder();
+builder.
 try{
 TxnForGuardianApproval r = await sdk.IsTransactionValidForGuardianApproval("0x98e1bccd239a09ca56f395d4ddd9a8335fbaa58d04069e51813c42ec03ae1f06");
 Console.WriteLine("Transfer PWR success: " + r.Valid);
