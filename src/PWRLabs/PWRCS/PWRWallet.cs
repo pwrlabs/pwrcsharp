@@ -24,7 +24,7 @@ public class PwrWallet {
 
   public PwrWallet(PwrApiSdk apiSdk, string? privateKeyHex = null) {
     _apiSdk = apiSdk;
-
+    _txnBuilder = new TransactionBuilder();
     try {
       _ecKey = new EthECKey(privateKeyHex);
 
