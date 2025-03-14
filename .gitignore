@@ -1,3 +1,6 @@
+bin/
+obj/
+
 # MacOS nuisances
 .DS_Store
 
