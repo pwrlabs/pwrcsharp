@@ -1,0 +1,12 @@
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/bin/Debug/net9.0/PWRCS.deps.json
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/bin/Debug/net9.0/PWRCS.dll
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/bin/Debug/net9.0/PWRCS.pdb
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.GeneratedMSBuildEditorConfig.editorconfig
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.AssemblyInfoInputs.cache
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.AssemblyInfo.cs
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.csproj.CoreCompileInputs.cache
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.dll
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/refint/PWRCS.dll
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.pdb
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/ref/PWRCS.dll
+/Users/khairallah/Desktop/Projects/pwrlabs/os/pwrcsharp/src/PWRCS/obj/Debug/net9.0/PWRCS.csproj.AssemblyReference.cache
