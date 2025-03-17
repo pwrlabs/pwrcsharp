@@ -1,6 +1,6 @@
-# PWRCS
+# PWR
 
-PWRCS is a C# library for interacting with the PWR network. It provides an easy interface for wallet management and sending transactions on PWR.
+PWR is a C# library for interacting with the PWR network. It provides an easy interface for wallet management and sending transactions on PWR.
 
 <div align="center">
 <!-- markdownlint-restore -->
@@ -32,10 +32,10 @@ Play with [Code Examples](https://github.com/keep-pwr-strong/pwr-examples/) 🎮
 
 ### Installation
 
-PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` file:
+PWR is available on The NuGet Gallery. Add this dependency to your `.csproj` file:
 
 ```bash
-dotnet add package PWRCS
+dotnet add package PWR
 ```
 
 ## 💫 Getting Started
@@ -43,8 +43,8 @@ dotnet add package PWRCS
 **Import the library:**
 
 ```csharp 
-using PWRCS;
-using PWRCS.Models;
+using PWR;
+using PWR.Models;
 ```
 
 **Set your RPC node:**

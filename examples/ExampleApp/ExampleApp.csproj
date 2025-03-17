@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PWRCS\PWRCS.csproj" />
+    <ProjectReference Include="..\..\src\PWR\PWR.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
