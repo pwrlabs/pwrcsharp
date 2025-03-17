@@ -1,4 +1,8 @@
-.idea/
-obj/
 bin/
-Main.cs/
+obj/
+
+# MacOS nuisances
+.DS_Store
+
+# Env
+.env

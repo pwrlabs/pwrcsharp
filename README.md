@@ -1,106 +1,102 @@
-# PWRCS
+# PWR
 
-PWRCS is a C# library for interacting with the PWR network. It provides an easy interface for wallet management and sending transactions on PWR.
+PWR is a C# library for interacting with the PWR network. It provides an easy interface for wallet management and sending transactions on PWR.
 
-## Features
+<div align="center">
+<!-- markdownlint-restore -->
 
-- Generate wallets and manage keys 
-- Get wallet balance and nonce
-- Build, sign and broadcast transactions
-- Transfer PWR tokens
-- Send data to PWR virtual machines
-- interact with PWR nodes via RPC
+[![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/pwrlabs/pwrcsharp/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+<a href="https://github.com/pwrlabs/pwrcsharp/blob/main/LICENSE/">
+  <img src="https://img.shields.io/badge/license-MIT-black">
+</a>
+<!-- <a href="https://github.com/pwrlabs/pwrcsharp/stargazers">
+  <img src='https://img.shields.io/github/stars/pwrlabs/pwrcsharp?color=yellow' />
+</a> -->
+<a href="https://pwrlabs.io/">
+  <img src="https://img.shields.io/badge/powered_by-PWR Chain-navy">
+</a>
+<a href="https://www.youtube.com/@pwrlabs">
+  <img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"/>
+</a>
+<a href="https://twitter.com/pwrlabs">
+  <img src="https://img.shields.io/twitter/follow/pwrlabs?style=social"/>
+</a>
 
-## Getting Started
+</div>
 
-### Prerequisites
+## 🌐 Documentation
 
-- .NET 7.0
+How to [Guides](https://docs.pwrlabs.io/pwrchain/overview) 🔜 & [API](https://docs.pwrlabs.io/developers/developing-on-pwr-chain/what-is-a-decentralized-application) 💻
+
+Play with [Code Examples](https://github.com/keep-pwr-strong/pwr-examples/) 🎮
 
 ### Installation
 
-PWRCS is available on The NuGet Gallery. Add this dependency to your `.csproj` file:
+PWR is available on The NuGet Gallery. Add this dependency to your `.csproj` file:
 
-```xml
-   <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="PWRCS" Version="7.0.0" />
-  </ItemGroup>
-
-</Project>
-
+```bash
+dotnet add package PWR
 ```
 
-### Usage
+## 💫 Getting Started
 
 **Import the library:**
+
 ```csharp 
-using PWRCS.*;
+using PWR;
+using PWR.Models;
 ```
 
 **Set your RPC node:**
+
 ```csharp
-var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+var rpc = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 ```
 
-**Generate a new wallet:** 
-```csharp
- var wallet = new PwrWallet(sdk);
-```
+**Import wallet by PK:**
 
-You also have the flexibility to import existing wallets using a variety of constructors
 ```csharp
-string privateKey = "private key"; //Replace with hex private key
-var wallet = new PwrWallet(sdk,privateKey); 
-```
-```csharp
-BigInteger privateKey = BigInteger.Parse("...");
-var wallet = new PwrWallet(sdk,privateKey); 
-```
-```csharp
-EthECKey ecKey = ...; //Generate or import ecKey 
-var wallet = new PwrWallet(sdk,ecKey); 
+string privateKey = "0xac0974bec...f80";
+var wallet = new PwrWallet(privateKey); 
 ```
 
 **Get wallet address:**
+
 ```csharp
 string address = await wallet.GetAddress();
 ```
 
 **Get wallet balance:**
+
 ```csharp
 ulong balance = await wallet.GetBalance();
 ```
 
 **Transfer PWR tokens:**
+
 ```csharp
 var response = await wallet.TransferPWR("recipientAddress", amount); 
 ```
 
-Sending a transcation to the PWR Chain returns a ApiResponse object, which specified if the transaction was a success, and returns relevant data.
+Sending a transcation to the PWR Chain returns a Response object, which specified if the transaction was a success, and returns relevant data.
 If the transaction was a success, you can retrieive the transaction hash, if it failed, you can fetch the error.
 
 ```csharp
-ApiResponse r = await wallet.TransferPWR("recipientAddress", amount); 
+WalletResponse r = await wallet.TransferPWR("recipientAddress", amount); 
 
 if(r.isSuccess) {
-   Console.WriteLine("Transcation Hash: " + r.Message);
+   	Console.WriteLine("Transcation Hash: " + r.Message);
 } else {
-   Console.WriteLine("Error: " + r.Error);
+	Console.WriteLine("Error: " + r.Error);
 }
 ```
 
 **Send data to a VM:**
+
 ```csharp
 uint vmId = 123;
-byte[] data = ...;
-var r = await wallet.SendVmDataTxn(vmId, data);
+byte[] data = Encoding.UTF8.GetBytes("Hello, World!");
+var r = await wallet.SendVMData(vmId, data);
 
 if(r.isSuccess) {
     Console.WriteLine("Transcation Hash: " + r.Message);
@@ -108,22 +104,23 @@ if(r.isSuccess) {
     Console.WriteLine("Error: " + r.Error);
 }
 ```
-### Other Method Calls
 
-**Update fee per byte:**
+### Other Static Calls
 
-Fetches latest fee-per-byte rate from the RPC node and updates the local fee rate.
+**Get RPC Node Url:**
+
+Returns currently set RPC node URL.
 
 ```csharp
-await sdk.UpdateFeePerByte();
-``` 
+var url = rpc.GetRpcNodeUrl()
+```
 
 **Get Fee Per Byte:**
 
 Gets the latest fee-per-byte rate.
 
 ```csharp
-ulong fee = await sdk.GetFeePerByte();
+ulong fee = await rpc.GetFeePerByte();
 ```
 
 **Get Balance Of Address:**
@@ -131,7 +128,7 @@ ulong fee = await sdk.GetFeePerByte();
 Gets the balance of a specific address.
 
 ```csharp
-ulong balance = await sdk.GetBalanceOfAddress("0x...");
+ulong balance = await rpc.GetBalanceOfAddress("0x...");
 ```
 
 **Get Nonce Of Address:**
@@ -139,24 +136,17 @@ ulong balance = await sdk.GetBalanceOfAddress("0x...");
 Gets the nonce/transaction count of a specific address.
 
 ```csharp
-uint nonce = await sdk.GetNonceOfAddress("0x..."); 
+uint nonce = await rpc.GetNonceOfAddress("0x..."); 
 ```
 
-**Broadcast Txn:**
+## ✏️ Contributing
 
-Broadcasts a signed transaction to the network.
+If you consider to contribute to this project please read [CONTRIBUTING.md](https://github.com/pwrlabs/pwrcsharp/blob/main/CONTRIBUTING.md) first.
 
-```csharp
-byte[] signedTransaction = ...;
-await sdk.BroadcastTxn(signedTransaction);
-```
+You can also join our dedicated channel for [developers](https://discord.com/channels/1141787507189624992/1180224756033790014) on the [PWR Chain Discord](https://discord.com/invite/YASmBk9EME)
 
-## Contributing
+## 📜 License
 
-Pull requests are welcome! 
+Copyright (c) 2025 PWR Labs
 
-For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
+Licensed under the [MIT license](https://github.com/pwrlabs/pwrcsharp/blob/main/LICENSE).
