@@ -64,9 +64,9 @@ namespace PWR
 
             Thread thread = new Thread(() =>
             {
-                while (!IsStopped)
+                while (!IsStopped())
                 {
-                    if (IsPaused)
+                    if (IsPaused())
                     {
                         Thread.Sleep(_pollInterval);
                         continue;
@@ -141,41 +141,65 @@ namespace PWR
         /// <summary>
         /// Gets whether the subscription is currently running
         /// </summary>
-        public bool IsRunning => Interlocked.CompareExchange(ref _isRunning, 0, 0) == 1;
+        public bool IsRunning()
+        {
+            return Interlocked.CompareExchange(ref _isRunning, 0, 0) == 1;
+        }
 
         /// <summary>
         /// Gets whether the subscription is currently paused
         /// </summary>
-        public bool IsPaused => Interlocked.CompareExchange(ref _isPaused, 0, 0) == 1;
+        public bool IsPaused()
+        {
+            return Interlocked.CompareExchange(ref _isPaused, 0, 0) == 1;
+        }
 
         /// <summary>
         /// Gets whether the subscription has been stopped
         /// </summary>
-        public bool IsStopped => Interlocked.CompareExchange(ref _isStopped, 0, 0) == 1;
+        public bool IsStopped()
+        {
+            return Interlocked.CompareExchange(ref _isStopped, 0, 0) == 1;
+        }
 
         /// <summary>
         /// Gets the latest block that has been checked for transactions
         /// </summary>
-        public ulong LatestCheckedBlock => _latestCheckedBlock;
+        public ulong GetLatestCheckedBlock()
+        {
+            return _latestCheckedBlock;
+        }
 
         /// <summary>
         /// Gets the block number where the subscription started checking from
         /// </summary>
-        public ulong StartingBlock => _startingBlock;
+        public ulong GetStartingBlock()
+        {
+            return _startingBlock;
+        }
 
         /// <summary>
         /// Gets the VM ID that this subscription is for
         /// </summary>
-        public ulong VmId => _vmId;
+        public ulong GetVidaId()
+        {
+            return _vmId;
+        }
 
         /// <summary>
         /// Gets the handler that processes transactions
         /// </summary>
-        public IvaTransactionHandler Handler => _handler;
+        public IvaTransactionHandler GetHandler()
+        {
+            return _handler;
+        }
 
         /// <summary>
         /// Gets the PWR SDK instance used by this subscription
         /// </summary>
-        public PwrApiSdk PwrSdk => _pwrSdk;
+        public PwrApiSdk GetPwrApiSdk()
+        {
+            return _pwrSdk;
+        }
     }
 }

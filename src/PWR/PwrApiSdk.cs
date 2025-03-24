@@ -532,64 +532,40 @@ public class PwrApiSdk
             return new ApiResponse(false, e.Message);
         }
     }
+
     /// <summary>
     /// Retrieves the nonce of the specified user address.
     /// </summary>
     /// <param name="address">The address of the user.</param>
-    /// <returns>An <see cref="ApiResponse{T}"/> object containing the nonce value.</returns>
-    public async Task<ApiResponse<uint>> GetNonceOfAddress(string address)
+    /// <returns>The nonce value.</returns>
+    public async Task<uint> GetNonceOfAddress(string address)
     {
         ValidateAddress(address);
-        try
-        {
-            var url = $"{_rpcNodeUrl}/nonceOfUser/?userAddress={address}";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+        var url = $"{_rpcNodeUrl}/nonceOfUser/?userAddress={address}";
+        var response = await _httpClient.GetAsync(url);
+        var responseString = await response.Content.ReadAsStringAsync();
 
-            if (string.IsNullOrWhiteSpace(responseString))
-                return new ApiResponse<uint>(false, "The response from the RPC node was empty.");
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-
-            var nonce = responseData["nonce"]?.Value<uint>() ?? 0;
-
-            return new ApiResponse<uint>(true, "Success", nonce);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<uint>(false, e.Message);
-        }
+        var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+        var nonce = responseData["nonce"]?.Value<uint>() ?? 0;
+        return nonce;
     }
     /// <summary>
     /// Retrieves the balance of the specified user address.
     /// </summary>
     /// <param name="address">The address of the user.</param>
-    /// <returns>An <see cref="ApiResponse{T}"/> object containing the balance value.</returns>
-    public async Task<ApiResponse<ulong>> GetBalanceOfAddress(string address)
+    /// <returns>The balance value.</returns>
+    public async Task<ulong> GetBalanceOfAddress(string address)
     {
         ValidateAddress(address);
-        try
-        {
-            var url = $"{_rpcNodeUrl}/balanceOf/?userAddress={address}";
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await response.Content.ReadAsStringAsync();
+        var url = $"{_rpcNodeUrl}/balanceOf/?userAddress={address}";
+        var response = await _httpClient.GetAsync(url);
+        var responseString = await response.Content.ReadAsStringAsync();
 
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                return new ApiResponse<ulong>(false, errorMessage ?? "Unknown error");
-            }
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-            var balance = responseData["balance"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
-
-            return new ApiResponse<ulong>(true, "Success", balance);
-        }
-        catch (Exception e)
-        {
-            return new ApiResponse<ulong>(false, e.Message);
-        }
+        var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+        var balance = responseData["balance"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
+        return balance;
     }
+
     /// <summary>
     /// Retrieves the guardian address and guardian status of the specified user address.
     /// </summary>
@@ -715,6 +691,7 @@ public class PwrApiSdk
 
         return validatorsCount;
     }
+
     /// <summary>
     /// Retrieves the total count of standby validators on the blockchain.
     /// </summary>

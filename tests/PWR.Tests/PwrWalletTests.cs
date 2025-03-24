@@ -61,11 +61,11 @@ public class PwrWalletTests
     // }
 
     [Fact]
-    public async Task TestSendPayableVmDataTxn()
+    public async Task TestSendPayableVMData()
     {   
         ulong vmId = 897435;
         var wallet = new PwrWallet("0xfefe6247b79a3a0dedcd8269f7e4ed4794231654c8e017815eadee1d2084d1c0");
-        var r = await wallet.SendPayableVmDataTxn(vmId, 10, Encoding.UTF8.GetBytes("Hello World"), await wallet.GetNonce());
+        var r = await wallet.SendPayableVMData(vmId, 10, Encoding.UTF8.GetBytes("Hello World"), await wallet.GetNonce());
         Assert.True(r.Success);
     }
 
