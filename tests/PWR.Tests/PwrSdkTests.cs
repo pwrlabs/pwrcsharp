@@ -81,8 +81,17 @@ public class PwrSdkTests
         var wallet = new PwrWallet();
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetBalanceOfAddress(wallet.PublicAddress);
-        ulong data = r.Data;
+        var data = await wallet.GetBalance();
+        Assert.Equal(0UL, data);
+    }
+
+    [Fact]
+    public async Task TestGetNonce()
+    {
+        var wallet = new PwrWallet();
+        
+        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var data = await wallet.GetNonce();
         Assert.Equal(0UL, data);
     }
     
@@ -171,16 +180,16 @@ public class PwrSdkTests
     public async Task TestGetNonceOfAddress()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetNonceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
-        Assert.True(r.Data >= 0);
+        var data = await sdk.GetNonceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(data >= 0);
     }
 
     [Fact]
     public async Task TestGetBalanceOfAddress()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetBalanceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
-        Assert.True(r.Data >= 0);
+        var data = await sdk.GetBalanceOfAddress("0xf6fe6a14b3aac06c2c102cf5f028df35157f9770");
+        Assert.True(data >= 0);
     }
 
     [Fact]

@@ -12,7 +12,7 @@
     <PackageTags>PWR, PWRCS</PackageTags>
     <RepositoryUrl>https://github.com/pwrlabs/pwrcsharp</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

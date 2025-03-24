@@ -93,20 +93,14 @@ public class PwrWallet {
     /// </summary>
     /// <returns>The nonce value.</returns>
     public async Task<uint> GetNonce() {
-        var response = await _apiSdk.GetNonceOfAddress(PublicAddress);
-        if (!response.Success) throw new Exception(response.Message);
-
-        return response.Data;
+        return await _apiSdk.GetNonceOfAddress(PublicAddress);
     }
     /// <summary>
     /// Retrieves the current balance of the wallet.
     /// </summary>
     /// <returns>The balance value.</returns>
     public async Task<ulong> GetBalance() {
-        var response = await _apiSdk.GetBalanceOfAddress(PublicAddress);
-        if (!response.Success) throw new Exception(response.Message);
-
-        return response.Data;
+        return await _apiSdk.GetBalanceOfAddress(PublicAddress);
     }
 
     /// <summary>
@@ -335,7 +329,7 @@ public class PwrWallet {
     /// <param name="vmId">The ID of the virtual machine to claim.</param>
     /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the claiming operation.</returns>
-    public async Task<WalletResponse> ClaimVmId(ulong vmId, uint nonce) {
+    public async Task<WalletResponse> ClaimVMId(ulong vmId, uint nonce) {
         byte[] signed = GetSignedTxn(await _txnBuilder.GetClaimVmIdTxn(
             vmId, nonce, await _apiSdk.GetChainId()));
 
@@ -346,8 +340,8 @@ public class PwrWallet {
     /// </summary>
     /// <param name="vmId">The ID of the virtual machine to claim.</param>
     /// <returns>The response of the claiming operation.</returns>
-    public async Task<WalletResponse> ClaimVmId(ulong vmId) {
-        return await ClaimVmId(vmId, await GetNonce());
+    public async Task<WalletResponse> ClaimVMId(ulong vmId) {
+        return await ClaimVMId(vmId, await GetNonce());
     }
 
     /// <summary>
@@ -422,7 +416,7 @@ public class PwrWallet {
     /// <param name="validator">The address of the validator to remove.</param>
     /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the transaction operation.</returns>
-    public async Task<WalletResponse> SendValidatorRemoveTxn(string validator,
+    public async Task<WalletResponse> SendValidatorRemove(string validator,
                                                             uint nonce) {
         byte[] signed = GetSignedTxn(await _txnBuilder.GetValidatorRemoveTxn(
             validator, nonce, await _apiSdk.GetChainId()));
@@ -434,8 +428,8 @@ public class PwrWallet {
     /// </summary>
     /// <param name="validator">The address of the validator to remove.</param>
     /// <returns>The response of the transaction operation.</returns>
-    public async Task<WalletResponse> SendValidatorRemoveTxn(string validator) {
-        return await SendValidatorRemoveTxn(validator, await GetNonce());
+    public async Task<WalletResponse> SendValidatorRemove(string validator) {
+        return await SendValidatorRemove(validator, await GetNonce());
     }
 
     public async Task<WalletResponse> ConduitApprove(ulong vmId,
@@ -488,7 +482,7 @@ public class PwrWallet {
         return await RemoveConduits(vmId, conduits, await GetNonce());
     }
 
-    public async Task<WalletResponse> SendPayableVmDataTxn(ulong vmId,
+    public async Task<WalletResponse> SendPayableVMData(ulong vmId,
                                                             ulong value,
                                                             byte[] data,
                                                             uint nonce) {
@@ -497,10 +491,10 @@ public class PwrWallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
-    public async Task<WalletResponse> SendPayableVmDataTxn(ulong vmId,
+    public async Task<WalletResponse> SendPayableVMData(ulong vmId,
                                                             ulong value,
                                                             byte[] data) {
-        return await SendPayableVmDataTxn(vmId, value, data, await GetNonce());
+        return await SendPayableVMData(vmId, value, data, await GetNonce());
     }
 
     public async Task<WalletResponse> MoveStake(ulong sharesAmount,
