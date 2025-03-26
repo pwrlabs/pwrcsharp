@@ -32,6 +32,10 @@ class Vidas
             }
         });
         Console.WriteLine("Listening for transactions...");
-        Console.ReadLine();
+        
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(1));
+        }
     }
 }
