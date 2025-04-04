@@ -110,7 +110,6 @@ namespace PWR
             });
 
             thread.Name = $"IvaTransactionSubscription:IVA-ID-{_vmId}";
-            thread.IsBackground = true;
             thread.Start();
         }
 
