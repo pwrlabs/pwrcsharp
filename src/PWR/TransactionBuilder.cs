@@ -1,11 +1,8 @@
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
-using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.Model;
-using Nethereum.Signer;
-using Nethereum.Util;
 using PWR.Models;
+using PWR.Utils;
 
 namespace PWR;
 
@@ -26,7 +23,88 @@ public class TransactionBuilder {
 
 		return stream.ToArray();
 	}
- 
+
+	/// <summary>
+	/// Constructs the base of a transaction.
+	/// </summary>
+	/// <param name="identifier">The identifier for the transaction.</param>
+	/// <param name="nonce">The nonce value of the transaction.</param>
+	/// <returns>The base of the transaction.</returns>
+	public async Task<byte[]> GetTxnBase(uint identifier, uint nonce,
+										byte chainId, ulong feePerByte, string address) {
+		MemoryStream stream = new MemoryStream(37);
+
+		stream.Write(GetBigEndianBytes(identifier)); // 4 bytes
+		stream.WriteByte(chainId); // 1 byte
+		stream.Write(GetBigEndianBytes(nonce)); // 4 bytes
+		stream.Write(GetBigEndianBytes((ulong)feePerByte)); // 8 bytes
+		stream.Write(Extensions.HexStringToByteArray(address)); // 20 bytes
+
+		return stream.ToArray();
+	}
+
+	public async Task<byte[]> GetSetPublicKeyTxn(string publicKey,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1001, nonce, chainId, feePerByte, address);
+
+		byte[] publicKeyBytes = Extensions.HexStringToByteArray(publicKey);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((ushort)publicKeyBytes.Length));
+			stream.Write(publicKeyBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetJoinAsValidatorTxn(string ip,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1002, nonce, chainId, feePerByte, address);
+
+		byte[] ipBytes = Encoding.UTF8.GetBytes(ip);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((ushort)ipBytes.Length));
+			stream.Write(ipBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetDelegateTxn(string to, ulong amount,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(to);
+
+		to = to.Substring(2);
+		byte[] txnBase = await GetTxnBase(1003, nonce, chainId, feePerByte, address);
+		using(MemoryStream stream = new MemoryStream(txnBase.Length + 8 + 20)) {
+			stream.Write(txnBase);
+			stream.Write(Extensions.HexStringToByteArray(to));
+			stream.Write(GetBigEndianBytes(amount));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetChangeIpTxn(string ip,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1004, nonce, chainId, feePerByte, address);
+
+		byte[] ipBytes = Encoding.UTF8.GetBytes(ip);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((ushort)ipBytes.Length));
+			stream.Write(ipBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetClaimActiveNodeSpotTxn(uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1005, nonce, chainId, feePerByte, address);
+
+		return txnBase;
+	}
+
 	/// <summary>
 	/// Constructs a transaction for transferring PWR tokens.
 	/// </summary>
@@ -35,412 +113,473 @@ public class TransactionBuilder {
 	/// <param name="nonce">The nonce value of the transaction.</param>
 	/// <returns>The constructed transaction.</returns>
 	public async Task<byte[]> GetTransferPWRTxn(string to, ulong amount,
-												uint nonce, byte chainId) {
+												uint nonce, byte chainId, ulong feePerByte, string address) {
 		ValidateAddress(to);
 
 		to = to.Substring(2);
-		byte[] txnBase = await GetTxnBase(0, nonce, chainId);
+		byte[] txnBase = await GetTxnBase(1006, nonce, chainId, feePerByte, address);
 		using(MemoryStream stream = new MemoryStream(txnBase.Length + 8 + 20)) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(amount));
 			stream.Write(Extensions.HexStringToByteArray(to));
-			return stream.ToArray();
-		}
-	}
-
-	/// <summary>
-	/// Retrieves a transaction for joining a node.
-	/// </summary>
-	/// <param name="ip">The IP address of the node to join.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetJoinAsValidatorTxn(string ip, uint nonce, byte chainId) {
-		byte[] txnBase = await GetTxnBase(1, nonce, chainId);
-		byte[] ipBytes = Encoding.UTF8.GetBytes(ip);
-
-		using MemoryStream stream =
-			new MemoryStream(txnBase.Length + ipBytes.Length);
-		stream.Write(txnBase, 0, txnBase.Length);
-		stream.Write(ipBytes, 0, ipBytes.Length);
-		return stream.ToArray();
-	}
-
-	public async Task<byte[]> GetClaimActiveNodeSpotTxn(uint nonce,
-														byte chaindId) {
-		byte[] txnBase = await GetTxnBase(2, nonce, chaindId);
-		return txnBase;
-	}
-
-	/// <summary>
-	/// Constructs a transaction for delegating PWR tokens.
-	/// </summary>
-	/// <param name="to">The recipient's address.</param>
-	/// <param name="amount">The amount of tokens to delegate.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetDelegateTxn(string to, ulong amount, uint nonce,
-											byte chainId) {
-		ValidateAddress(to);
-		to = to.Substring(2);
-
-		byte[] txnBase = await GetTxnBase(3, nonce, chainId);
-		byte[] toBytes = Extensions.HexStringToByteArray(to);
-
-		using(MemoryStream stream =
-				new MemoryStream(txnBase.Length + 8 + toBytes.Length)) {
-			stream.Write(txnBase, 0, txnBase.Length);
 			stream.Write(GetBigEndianBytes(amount));
-			stream.Write(toBytes);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for withdrawing shares from the specified
-	/// address.
-	/// </summary>
-	/// <param name="from">The sender's address.</param>
-	/// <param name="sharesAmount">The amount of shares to withdraw.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetWithdrawTxn(string from, ulong sharesAmount,
-											uint nonce, byte chainId) {
-		ValidateAddress(from);
-		from = from.Substring(2);
+	public async Task<byte[]> GetChangeEarlyWithdrawPenaltyProposalTxn(string title, string description, ulong withdrawPenaltyTime, ulong withdrawPenalty,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1009, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
 
-		byte[] txnBase = await GetTxnBase(4, nonce, chainId);
-		byte[] fromBytes = Extensions.HexStringToByteArray(from);
-
-		using(MemoryStream stream =
-				new MemoryStream(txnBase.Length + 8 + fromBytes.Length)) {
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(sharesAmount));
-			stream.Write(fromBytes);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(withdrawPenaltyTime));
+			stream.Write(GetBigEndianBytes(withdrawPenalty));
+			stream.Write(descriptionBytes);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for sending data to a virtual machine.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine.</param>
-	/// <param name="data">The data to send.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetVmDataTxn(ulong vmId, byte[] data, uint nonce,
-											byte chainId) {
-		byte[] txnBase = await GetTxnBase(5, nonce, chainId);
+	public async Task<byte[]> GetChangeFeePerByteProposalTxn(string title, string description, ulong newFeePerByte,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1010, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
 
-		using(MemoryStream stream = new MemoryStream(txnBase.Length + 8 + data.Length)) {
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(vmId));
-			stream.Write(GetBigEndianBytes(data.Length));
-			stream.Write(data);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(newFeePerByte));
+			stream.Write(descriptionBytes);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for claiming a virtual machine ID.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetClaimVmIdTxn(ulong vmId, uint nonce,
-												byte chainId) {
-		byte[] txnBase = await GetTxnBase(6, nonce, chainId);
+	public async Task<byte[]> GetChangeMaxBlockSizeProposalTxn(string title, string description, ulong maxBlockSize,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1011, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
 
-		using(MemoryStream stream = new MemoryStream(txnBase.Length + 8)) {
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(vmId));
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(maxBlockSize));
+			stream.Write(descriptionBytes);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for removing a validator.
-	/// </summary>
-	/// <param name="validator">The address of the validator to remove.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetValidatorRemoveTxn(string validator, uint nonce,
-													byte chainId) {
-		ValidateAddress(validator);
-		validator = validator.Substring(2);
+	public async Task<byte[]> GetChangeMaxTxnSizeProposalTxn(string title, string description, ulong maxTxnSize,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1012, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
 
-		byte[] txnBase = await GetTxnBase(7, nonce, chainId);
-
-		using(MemoryStream stream = new MemoryStream(txnBase.Length + 20)) {
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(Extensions.HexStringToByteArray(validator));
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(maxTxnSize));
+			stream.Write(descriptionBytes);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for setting a guardian for the specified address.
-	/// </summary>
-	/// <param name="guardianAddress">The guardian's address.</param>
-	/// <param name="expiryDate">The expiry date of the guardian.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetSetGuardianTxn(string guardianAddress,
-												ulong expiryDate, uint nonce,
-												byte chainId) {
-		ValidateAddress(guardianAddress);
-		if (expiryDate < (ulong) DateTimeOffset.Now.ToUnixTimeSeconds()) {
-			throw new ArgumentException("Expiry date cannot be in the past");
+	public async Task<byte[]> GetChangeOverallBurnPercentageProposalTxn(string title, string description, ulong burnPercentage,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1013, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(burnPercentage));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
 		}
+	}
 
-		guardianAddress = guardianAddress.Substring(2);
+	public async Task<byte[]> GetChangeRewardPerYearProposalTxn(string title, string description, ulong rewardPerYear,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1014, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
 
-		byte[] txnBase = await GetTxnBase(8, nonce, chainId);
-		byte[] guardianAddressBytes = Extensions.HexStringToByteArray(guardianAddress);
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(rewardPerYear));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetChangeValidatorCountLimitProposalTxn(string title, string description, ulong validatorCountLimit,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1015, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(validatorCountLimit));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetChangeValidatorJoiningFeeProposalTxn(string title, string description, ulong joiningFee,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1016, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(joiningFee));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetChangeVidaIdClaimingFeeProposalTxn(string title, string description, ulong claimingFee,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1017, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(claimingFee));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetChangeVidaOwnerTxnFeeShareProposalTxn(string title, string description, ulong feeShare,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1018, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(GetBigEndianBytes(feeShare));
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetOtherProposalTxn(string title, string description,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1019, nonce, chainId, feePerByte, address);
+		byte[] titleBytes = Encoding.UTF8.GetBytes(title);
+		byte[] descriptionBytes = Encoding.UTF8.GetBytes(description);
+
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes((uint)titleBytes.Length));
+			stream.Write(titleBytes);
+			stream.Write(descriptionBytes);
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetVoteOnProposalTxn(string proposalHash, byte vote,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(proposalHash);
+		byte[] txnBase = await GetTxnBase(1020, nonce, chainId, feePerByte, address);
 		
-		using(MemoryStream stream = new MemoryStream(txnBase.Length + 20 +
-												guardianAddressBytes.Length)) {
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(expiryDate));
-			stream.Write(guardianAddressBytes);
+			stream.Write(Extensions.HexStringToByteArray(proposalHash.Substring(2)));
+			stream.WriteByte(vote);
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction for removing a guardian.
-	/// </summary>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetRemoveGuardianTxn(uint nonce, byte chainId) {
-		byte[] txnBase = await GetTxnBase(9, nonce, chainId);
-		return txnBase;
-	}
-
-	/// <summary>
-	/// Constructs a transaction for sending a guardian wrapped transaction.
-	/// </summary>
-	/// <param name="txn">The transaction data.</param>
-	/// <param name="nonce">The nonce value of the transaction.</param>
-	/// <returns>The constructed transaction.</returns>
-	public async Task<byte[]> GetGuardianApprovalTxn(List<byte[]> txns,
-													uint nonce, byte chainId) {
-		int totalLength = 0;
-		foreach (byte[] txn in txns) {
-			totalLength += txn.Length;
-		}
-
-		byte[] txnBase = await GetTxnBase(10, nonce, chainId);
-
-		using(MemoryStream stream = new MemoryStream(
-				txnBase.Length + (txns.Count * 4) + totalLength)) {
+	public async Task<byte[]> GetGuardianApprovalTxn(List<byte[]> transactions,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1021, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			foreach (byte[] txn in txns) {
-				stream.Write(GetBigEndianBytes(txn.Length));
-				stream.Write(txn);
+			foreach (var tx in transactions) {
+				stream.Write(GetBigEndianBytes((uint)tx.Length));
+				stream.Write(tx);
 			}
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction to send data to a virtual machine with an
-	/// additional value transfer. This is used for transactions that require both
-	/// data delivery and payments to the virtual machine.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine to which the data and
-	/// value will be sent.</param> <param name="value">The amount of value (e.g.,
-	/// in tokens or cryptocurrency) to be sent to the virtual machine.</param>
-	/// <param name="data">The data in byte array format to be sent to the virtual
-	/// machine.</param> <param name="nonce">The nonce value for this transaction,
-	/// which helps prevent replay attacks.</param> <param name="chainId">The
-	/// identifier of the blockchain on which this transaction will be
-	/// executed.</param> <returns>A task that when completed returns a byte array
-	/// of the transaction.</returns>
+	public async Task<byte[]> GetRemoveGuardianTxn(uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1022, nonce, chainId, feePerByte, address);
+		return txnBase;
+	}
 
-	public async Task<byte[]> GetPayableVmDataTxn(ulong vmId, ulong value,
-													byte[] data, uint nonce,
-													byte chainId) {
-		byte[] txnBase = await GetTxnBase(11, nonce, chainId);
-
-		using(MemoryStream stream = new MemoryStream(txnBase.Length + 16 + data.Length)) {
+	public async Task<byte[]> GetSetGuardianTxn(ulong guardianExpiryDate, string guardian,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(guardian);
+		byte[] txnBase = await GetTxnBase(1023, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
 			stream.Write(txnBase);
-			stream.Write(GetBigEndianBytes(vmId));
-			stream.Write(GetBigEndianBytes(data.Length));
+			stream.Write(GetBigEndianBytes(guardianExpiryDate));
+			stream.Write(Extensions.HexStringToByteArray(guardian.Substring(2)));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetMoveStakeTxn(ulong sharesAmount, string fromValidator, string toValidator,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(fromValidator);
+		ValidateAddress(toValidator);
+		byte[] txnBase = await GetTxnBase(1024, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(sharesAmount));
+			stream.Write(Extensions.HexStringToByteArray(fromValidator.Substring(2)));
+			stream.Write(Extensions.HexStringToByteArray(toValidator.Substring(2)));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetRemoveValidatorTxn(string validator,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(validator);
+		byte[] txnBase = await GetTxnBase(1025, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(Extensions.HexStringToByteArray(validator.Substring(2)));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetWithdrawTxn(ulong shares, string validator,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(validator);
+		byte[] txnBase = await GetTxnBase(1026, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(shares));
+			stream.Write(Extensions.HexStringToByteArray(validator.Substring(2)));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetClaimVidaIdTxn(ulong vidaId,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1028, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetConduitApprovalTxn(ulong vidaId, List<byte[]> transactions,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1029, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var tx in transactions) {
+				stream.Write(GetBigEndianBytes((uint)tx.Length));
+				stream.Write(tx);
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetPayableVidaDataTxn(ulong vidaId, byte[] data, ulong value,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1030, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			stream.Write(GetBigEndianBytes((uint)data.Length));
 			stream.Write(data);
 			stream.Write(GetBigEndianBytes(value));
 			return stream.ToArray();
 		}
 	}
 
-	/// <summary>
-	/// Constructs a transaction to approve a set of transactions via a specified
-	/// virtual machine ID (VM ID). This function ensures that each transaction
-	/// within the batch is approved for execution by the conduit mechanisms.
-	/// </summary>
-	/// <param name="vmId">The unique identifier of the virtual machine that
-	/// serves as a conduit.</param> <param name="txns">A list of transactions in
-	/// byte array format that are to be approved.</param> <param name="nonce">The
-	/// nonce value for this transaction to ensure uniqueness and avoid replay
-	/// attacks.</param> <param name="chainId">The identifier of the blockchain
-	/// where this transaction will be executed.</param> <returns>A task that upon
-	/// completion provides the byte array representing the serialized form of the
-	/// transaction.</returns
-	public async Task<byte[]> GetConduitApprovalTxn(ulong vmId, List<byte[]> txns,
-													uint nonce, byte chainId) {
-		if (txns.Count == 0) throw new ArgumentException("Txns list is empty.");
-		int totalTxnsLength = 0;
-		foreach (byte[] txn in txns) {
-			totalTxnsLength += txn.Length;
-		}
-		byte[] txnBase = await GetTxnBase(12, nonce, chainId);
-		using MemoryStream stream = new MemoryStream(
-			txnBase.Length + 8 + (txns.Count * 4) + totalTxnsLength);
-		stream.Write(txnBase);
-		stream.Write(GetBigEndianBytes(vmId));
-		foreach (byte[] txn in txns) {
-			stream.Write(GetBigEndianBytes(txn.Length));
-			stream.Write(txn);
-		}
-		return stream.ToArray();
-	}
-
-	/// <summary>
-	/// Constructs a transaction to set or replace the conduits associated with a
-	/// specific virtual machine. This can change how the virtual machine
-	/// processes transactions or interacts with other network components.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine whose conduits are to be
-	/// set.</param> <param name="conduits">A list of byte arrays, each
-	/// representing a conduit configuration to be set.</param> <param
-	/// name="nonce">The nonce value for this transaction, used to maintain the
-	/// order and integrity of transactions.</param> <param name="chainId">The
-	/// blockchain identifier where this transaction will occur.</param>
-	/// <returns>A task that when resolved returns a byte array of the constructed
-	/// transaction.</returns>
-	public async Task<byte[]> GetSetConduitsTxn(ulong vmId, List<byte[]> conduits,
-												uint nonce, byte chainId) {
-		if (conduits.Count == 0)
-		throw new ArgumentException("Conduits list is empty.");
-		int totalConduitsLenght = 0;
-
-		foreach (byte[] txn in conduits) {
-			totalConduitsLenght += txn.Length;
-		}
-
-		byte[] txnBase = await GetTxnBase(13, nonce, chainId);
-		using MemoryStream stream = new MemoryStream(
-			txnBase.Length + 8 + (conduits.Count * 4) + totalConduitsLenght);
-		stream.Write(txnBase);
-		stream.Write(GetBigEndianBytes(vmId));
-		foreach (byte[] conduit in conduits) {
-			stream.Write(GetBigEndianBytes(conduit.Length));
-			stream.Write(conduit);
-		}
-		return stream.ToArray();
-	}
-
-	/// <summary>
-	/// Constructs a transaction to add new conduits to a virtual machine. Adding
-	/// conduits can enhance the VM's capabilities or modify its operational
-	/// logic.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine to which conduits will be
-	/// added.</param> <param name="conduits">A list of byte arrays, where each
-	/// array represents a conduit to be added.</param> <param name="nonce">The
-	/// nonce value for this transaction, ensuring transaction uniqueness across
-	/// the network.</param> <param name="chainId">The identifier of the chain on
-	/// which the transaction will be processed.</param> <returns>A task that
-	/// provides the byte array of the serialized transaction upon
-	/// completion.</returns>
-
-	public async Task<byte[]> GetAddConduitsTxn(ulong vmId, List<byte[]> conduits,
-												uint nonce, byte chainId) {
-		if (conduits.Count == 0)
-		throw new ArgumentException("Conduits list is empty.");
-
-		byte[] txnBase = await GetTxnBase(14, nonce, chainId);
-		using MemoryStream stream =
-			new MemoryStream(txnBase.Length + 8 + (conduits.Count * 20));
-		stream.Write(txnBase);
-		stream.Write(GetBigEndianBytes(vmId));
-		foreach (byte[] conduit in conduits) {
-			stream.Write(conduit);
-		}
-		return stream.ToArray();
-	}
-
-	/// <summary>
-	/// Constructs a transaction to remove one or more conduits from a virtual
-	/// machine. This can be used to deactivate certain features or capabilities
-	/// of the VM.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine from which conduits will
-	/// be removed.</param> <param name="conduits">A list of byte arrays
-	/// representing the conduits to be removed.</param> <param name="nonce">The
-	/// nonce value for this transaction, critical for maintaining the integrity
-	/// and order of transactions.</param> <param name="chainId">The blockchain
-	/// identifier where this transaction will be executed.</param> <returns>A
-	/// task that resolves to a byte array representing the serialized
-	/// transaction.</returns>
-
-	public async Task<byte[]> GetRemoveConduitsTxn(ulong vmId,
-													List<byte[]> conduits,
-													uint nonce, byte chainId) {
-		if (conduits.Count == 0)
-		throw new ArgumentException("Conduits list is empty.");
-		int totalConduitsLenght = 0;
-
-		foreach (byte[] txn in conduits) {
-			totalConduitsLenght += txn.Length;
-		}
-
-		byte[] txnBase = await GetTxnBase(15, nonce, chainId);
-		using MemoryStream stream = new MemoryStream(
-			txnBase.Length + 8 + (conduits.Count * 4) + totalConduitsLenght);
-
-		stream.Write(txnBase);
-		byte[] vmIdArr = BitConverter.GetBytes(vmId);
-		Array.Reverse(vmIdArr);
-		foreach (byte[] conduit in conduits) {
-			stream.Write(GetBigEndianBytes(conduit.Length));
-			stream.Write(conduit);
-		}
-		return stream.ToArray();
-	}
-
-	/// <summary>
-	/// Constructs a transaction to move stake from one validator to another. This
-	/// is typically used in proof of stake networks to redelegate staking tokens
-	/// from one node to another without returning to the wallet.
-	/// </summary>
-	/// <param name="sharesAmount">The amount of stake or shares to be
-	/// moved.</param> <param name="fromValidator">The address of the validator
-	/// from which the stake will be moved.</param> <param name="toValidator">The
-	/// address of the validator to which the stake will be moved.</param> <param
-	/// name="nonce">The nonce value for this transaction, ensuring its uniqueness
-	/// in the blockchain ledger.</param> <param name="chainId">The blockchain
-	/// identifier where this transaction will take place.</param> <returns>A task
-	/// that provides the byte array of the serialized transaction once
-	/// completed.</returns>
-
-	public async Task<byte[]> GetMoveStakeTxn(ulong sharesAmount,
-												String fromValidator,
-												String toValidator, uint nonce,
-												byte chainId) {
-		ValidateAddress(fromValidator);
-		ValidateAddress(toValidator);
+	public async Task<byte[]> GetRemoveConduitsTxn(ulong vidaId, List<string> conduits,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1031, nonce, chainId, feePerByte, address);
 		
-		fromValidator = fromValidator.Substring(2);
-		toValidator = toValidator.Substring(2);
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var conduit in conduits) {
+				ValidateAddress(conduit);
+				stream.Write(Extensions.HexStringToByteArray(conduit.Substring(2)));
+			}
+			return stream.ToArray();
+		}
+	}
 
-		byte[] txnBase = await GetTxnBase((byte) 16, nonce, chainId);
-		using MemoryStream stream = new MemoryStream(txnBase.Length + 48);
-		stream.Write(txnBase, 0, txnBase.Length);
-		stream.Write(GetBigEndianBytes(sharesAmount));
-		stream.Write(Extensions.HexStringToByteArray(fromValidator));
-		stream.Write(Extensions.HexStringToByteArray(toValidator));
+	public async Task<byte[]> GetSetConduitModeTxn(ulong vidaId, byte mode, ulong conduitThreshold, 
+												List<string> conduits, List<(string, ulong)> conduitsWithVotingPower,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1033, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			stream.WriteByte(mode);
+			stream.Write(GetBigEndianBytes(conduitThreshold));
 
-		return stream.ToArray();
+			if (conduits != null && conduits.Count > 0) {
+				stream.Write(GetBigEndianBytes((uint)conduits.Count));
+				foreach (var conduit in conduits) {
+					ValidateAddress(conduit);
+					stream.Write(Extensions.HexStringToByteArray(conduit.Substring(2)));
+				}
+			} else if (conduitsWithVotingPower != null && conduitsWithVotingPower.Count > 0) {
+				stream.Write(GetBigEndianBytes((uint)conduitsWithVotingPower.Count));
+				foreach (var (conduit, votingPower) in conduitsWithVotingPower) {
+					ValidateAddress(conduit);
+					stream.Write(Extensions.HexStringToByteArray(conduit.Substring(2)));
+					stream.Write(GetBigEndianBytes(votingPower));
+				}
+			} else {
+				stream.Write(GetBigEndianBytes(0u));
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetSetVidaPrivateStateTxn(ulong vidaId, bool privateState,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1034, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			stream.WriteByte((byte)(privateState ? 1 : 0));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetSetVidaToAbsolutePublicTxn(ulong vidaId,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1035, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetAddVidaSponsoredAddressesTxn(ulong vidaId, List<string> sponsoredAddresses,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1036, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var sponsoredAddr in sponsoredAddresses) {
+				ValidateAddress(sponsoredAddr);
+				stream.Write(Extensions.HexStringToByteArray(sponsoredAddr.Substring(2)));
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetAddVidaAllowedSendersTxn(ulong vidaId, List<string> allowedSenders,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1037, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var senderAddr in allowedSenders) {
+				ValidateAddress(senderAddr);
+				stream.Write(Extensions.HexStringToByteArray(senderAddr.Substring(2)));
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetRemoveVidaAllowedSendersTxn(ulong vidaId, List<string> allowedSenders,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1038, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var sender in allowedSenders) {
+				ValidateAddress(sender);
+				stream.Write(Extensions.HexStringToByteArray(sender.Substring(2)));
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetRemoveSponsoredAddressesTxn(ulong vidaId, List<string> sponsoredAddresses,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1039, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			foreach (var sponsoredAddr in sponsoredAddresses) {
+				ValidateAddress(sponsoredAddr);
+				stream.Write(Extensions.HexStringToByteArray(sponsoredAddr.Substring(2)));
+			}
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetSetPwrTransferRightsTxn(ulong vidaId, bool ownerCanTransferPwr,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		byte[] txnBase = await GetTxnBase(1040, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			stream.WriteByte((byte)(ownerCanTransferPwr ? 1 : 0));
+			return stream.ToArray();
+		}
+	}
+
+	public async Task<byte[]> GetTransferPwrFromVidaTxn(ulong vidaId, string receiver, ulong amount,
+												uint nonce, byte chainId, ulong feePerByte, string address) {
+		ValidateAddress(receiver);
+		byte[] txnBase = await GetTxnBase(1041, nonce, chainId, feePerByte, address);
+		
+		using (MemoryStream stream = new MemoryStream()) {
+			stream.Write(txnBase);
+			stream.Write(GetBigEndianBytes(vidaId));
+			stream.Write(Extensions.HexStringToByteArray(receiver.Substring(2)));
+			stream.Write(GetBigEndianBytes(amount));
+			return stream.ToArray();
+		}
 	}
 
 	private byte[] GetBigEndianBytes(dynamic value) {
@@ -467,17 +606,6 @@ public class TransactionBuilder {
 	}
 
 	public void ValidateAddress(string address) {
-		if (string.IsNullOrEmpty(address)) {
-			throw new ArgumentException("Address cannot be null or empty.");
-		}
-		if (address.Length != 42) {
-			throw new ArgumentException("Invalid address format.");
-		}
-
-		string pattern = @"^0x[0-9a-fA-F]{40}$";
-
-		if (!Regex.IsMatch(address, pattern)) {
-			throw new ArgumentException("Invalid address format.");
-		}
+		AddressValidator.ValidateAddress(address);
 	}
 }

@@ -11,7 +11,7 @@ namespace ExampleApp;
 class App
 {
     private static readonly PwrApiSdk sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-    private static PwrWallet wallet;
+    private static PwrWallet wallet = new PwrWallet("demand april length soap cash concert shuffle result force mention fringe slim");
     private const long vidaId = 848796;
     private const ulong startingBlockNumber = 241741;
 
@@ -35,13 +35,13 @@ class App
             }
             else
             {
-                wallet = new PwrWallet();
+                wallet = new PwrWallet("demand april length soap cash concert shuffle result force mention fringe slim");
                 wallet.StoreWallet(walletFile, password);
             }
         }
         catch
         {
-            wallet = new PwrWallet();
+            wallet = new PwrWallet(12);
             wallet.StoreWallet(walletFile, password);
         }
 
@@ -51,7 +51,7 @@ class App
 
     static void ReadDataFromPwrChain()
     {
-        var subscription = sdk.SubscribeToIvaTransactions(vidaId, startingBlockNumber, transaction =>
+        var subscription = sdk.SubscribeToVidaTransactions(vidaId, startingBlockNumber, transaction =>
         {
             var data = transaction.Data;
 
@@ -65,6 +65,7 @@ class App
                 var dataStr = Encoding.UTF8.GetString(dataBytes);
                 using var doc = JsonDocument.Parse(dataStr);
                 var root = doc.RootElement;
+                Console.WriteLine(root.ToString());
 
                 if (root.TryGetProperty("action", out var actionElement))
                 {
@@ -73,15 +74,12 @@ class App
 
                     switch (action?.ToLower())
                     {
-                        case "sendmessage":
+                        case "sendMessage":
                             if (root.TryGetProperty("message", out var messageElement))
                             {
                                 var message = messageElement.GetString();
                                 Console.WriteLine($"Message from {sender}: {message}");
                             }
-                            break;
-                        case "sendgift":
-                            // Handle sendGift logic
                             break;
                     }
                 }
@@ -117,10 +115,10 @@ class App
             var jsonString = JsonSerializer.Serialize(jsonData);
             var dataBytes = Encoding.UTF8.GetBytes(jsonString);
 
-            var response = await wallet.SendVMData(vidaId, dataBytes);
+            var response = await wallet.SendVidaData(vidaId, dataBytes);
             if (response.Success)
             {
-                Console.WriteLine($"Message sent successfully. Txn hash: {response.TxnHash}");
+                Console.WriteLine($"Message sent successfully. Txn hash: {response.Hash}");
             }
             else
             {

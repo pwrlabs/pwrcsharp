@@ -12,7 +12,7 @@ class Program
 {
     static async Task Main()
     {
-        // await Vidas.Run();
-        await App.Run();
+        await Vidas.Run();
+        // await App.Run();
     }
 }

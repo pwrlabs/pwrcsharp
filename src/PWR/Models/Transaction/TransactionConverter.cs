@@ -21,8 +21,8 @@ public class TransactionConverter : JsonConverter
 
             switch (type)
             {
-                case "VM Data":
-                    return jsonObject.ToObject<VmDataTxn>(serializer);
+                case "VIDA Data":
+                    return jsonObject.ToObject<VidaDataTxn>(serializer);
                 case "Set Guardian":
                     return jsonObject.ToObject<SetGuardianTxn>(serializer);
                 case "Remove Guardian":
@@ -31,9 +31,9 @@ public class TransactionConverter : JsonConverter
                     return jsonObject.ToObject<GuardianApprovalTxn>(serializer);
                 case "Validator Claim Spot":
                     return jsonObject.ToObject<ClaimSpotTxn>(serializer);
-                case "Payable VM Data":
-                    return jsonObject.ToObject<PayableVmDataTxn>(serializer);
-                case "Claim VM ID":
+                case "Payable VIDA Data":
+                    return jsonObject.ToObject<PayableVidaDataTxn>(serializer);
+                case "Claim VIDA ID":
                     return jsonObject.ToObject<ClaimVlmdTxn>(serializer);
                 case "Conduit Approval":
                     return jsonObject.ToObject<ConduitApprovalTxn >(serializer);  

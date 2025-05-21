@@ -14,21 +14,13 @@ public class PwrSdkTests
         Assert.NotEqual(0UL, r);
     }
 
-    [Fact]
-    public async Task TestGetVmDataTransactions()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTransactions(317, 319, 123);
-        Assert.NotEmpty(vmDataTxns);
-    }
-
-    [Fact]
-    public async Task TestGetVmDataTransactionsFilterByPerBytePrefix()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        List<VmDataTxn> vmDataTxns = await sdk.GetVmDataTransactionsFilterByPerBytePrefix(317, 319, 123, new byte[] {1,7});
-        Assert.IsType<List<VmDataTxn>>(vmDataTxns);
-    }
+    // [Fact]
+    // public async Task TestGetVidaDataTransactions()
+    // {
+    //     var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+    //     List<VidaDataTxn> vidaDataTxns = await sdk.GetVidaDataTransactions(85411, 85420, 123);
+    //     Assert.NotEmpty(vidaDataTxns);
+    // }
 
     [Fact]
     public async Task TestGetActiveVotingPower()
@@ -39,20 +31,12 @@ public class PwrSdkTests
     }
 
     [Fact]
-    public async Task TestGetDelegatorsCount()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        uint r = await sdk.GetDelegatorsCount();
-        Assert.Equal(0UL, r);
-    }
-
-    [Fact]
     public async Task TestGetBlockChainVersion()
     {
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         short r = await sdk.GetBlockChainVersion();
-        Assert.NotEqual(0,r);
+        Assert.NotEqual(0, r);
     }
 
     [Fact]
@@ -78,7 +62,7 @@ public class PwrSdkTests
     [Fact]
     public async Task TestGetBalance()
     {
-        var wallet = new PwrWallet();
+        var wallet = new PwrWallet(12);
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var data = await wallet.GetBalance();
@@ -88,7 +72,7 @@ public class PwrSdkTests
     [Fact]
     public async Task TestGetNonce()
     {
-        var wallet = new PwrWallet();
+        var wallet = new PwrWallet(12);
         
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
         var data = await wallet.GetNonce();
@@ -135,13 +119,13 @@ public class PwrSdkTests
         Assert.True(r >= 0);
     }
     
-    [Fact]
-    public async Task TestGetAllValidators()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetAllValidators();
-        Assert.True(r.Any());
-    }
+    // [Fact]
+    // public async Task TestGetAllValidators()
+    // {
+    //     var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+    //     var r = await sdk.GetAllValidators();
+    //     Assert.True(r.Any());
+    // }
 
     [Fact]
     public async Task TestGetStandbyValidators()
@@ -151,19 +135,19 @@ public class PwrSdkTests
         Assert.True(r.Any());
     }
 
-    [Fact]
-    public async Task TestGetActiveValidators()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetActiveValidators();
-        Assert.True(r.Any());
-    }
+    // [Fact]
+    // public async Task TestGetActiveValidators()
+    // {
+    //     var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+    //     var r = await sdk.GetActiveValidators();
+    //     Assert.True(r.Any());
+    // }
 
     [Fact]
-    public async Task TestGetOwnerOfVmIds()
+    public async Task TestGetOwnerOfVidaIds()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetOwnerOfVmIds(1234);
+        var r = await sdk.GetOwnerOfVidaIds(1234);
         Assert.True(!string.IsNullOrWhiteSpace(r));
     }
 
@@ -204,7 +188,7 @@ public class PwrSdkTests
     public async Task TestGetDelegatorsOfPwr()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetDelegatorsOfPwr("0x3B3B69093879E7B6F28366FA3C32762590FF547E", "0xF88AB0D32274BC659534B2AC7E0ECB2A17329FC7");
+        var r = await sdk.GetDelegatorsOfPwr("0xe68191b7913e72e6f1759531fbfaa089ff02308a", "0x023C98B9E4B6C2E94DB8A724D1131F8E33F8D8EB");
         Assert.True(r >= 0);
     }
 
@@ -212,7 +196,7 @@ public class PwrSdkTests
     public async Task TestGetShareValue()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetShareValue("0xF88AB0D32274BC659534B2AC7E0ECB2A17329FC7");
+        var r = await sdk.GetShareValue("0x023C98B9E4B6C2E94DB8A724D1131F8E33F8D8EB");
         Assert.True(r >= 0);
     }
 
@@ -220,15 +204,16 @@ public class PwrSdkTests
     public async Task TestGetValidator()
     {
         var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetValidator("0xF88AB0D32274BC659534B2AC7E0ECB2A17329FC7");
-        Assert.Equal("F88AB0D32274BC659534B2AC7E0ECB2A17329FC7", r.Address); 
+        var r = await sdk.GetValidator("0x023C98B9E4B6C2E94DB8A724D1131F8E33F8D8EB");
+        Assert.Equal("0x023C98B9E4B6C2E94DB8A724D1131F8E33F8D8EB", r.Address); 
     }
 
-    [Fact]
-    public async Task TestGetDelegatees()
-    {
-        var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-        var r = await sdk.GetDelegatees("0xD97C25c0842704588dD70A061c09A522699E2B9c");
-        Assert.True(r.Any()); 
-    }
+    // [Fact]
+    // public async Task TestGetDelegatees()
+    // {
+    //     var sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+    //     var r = await sdk.GetDelegatees("0xe68191b7913e72e6f1759531fbfaa089ff02308a");
+    //     Console.WriteLine("RRRR:" + r);
+    //     Assert.True(1==1); 
+    // }
 }

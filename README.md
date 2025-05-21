@@ -53,11 +53,17 @@ using PWR.Models;
 var rpc = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
 ```
 
-**Import wallet by PK:**
+**Generate a new random wallet:**
 
 ```csharp
-string privateKey = "0xac0974bec...f80";
-var wallet = new PwrWallet(privateKey); 
+var wallet = new PwrWallet(12); 
+```
+
+**Import wallet by Seed Phrase:**
+
+```csharp
+string seedPhrase = "your seed phrase here";
+var wallet = new PwrWallet(seedPhrase); 
 ```
 
 **Get wallet address:**
@@ -82,26 +88,26 @@ Sending a transcation to the PWR Chain returns a Response object, which specifie
 If the transaction was a success, you can retrieive the transaction hash, if it failed, you can fetch the error.
 
 ```csharp
-WalletResponse r = await wallet.TransferPWR("recipientAddress", amount); 
+WalletResponse response = await wallet.TransferPWR("recipientAddress", amount);
 
-if(r.isSuccess) {
-   	Console.WriteLine("Transcation Hash: " + r.Message);
+if(response.Success) {
+   	Console.WriteLine("Transcation Hash: " + response.Hash);
 } else {
-	Console.WriteLine("Error: " + r.Error);
+	Console.WriteLine("Error: " + response.Error);
 }
 ```
 
-**Send data to a VM:**
+**Send data to a VIDA:**
 
 ```csharp
-uint vmId = 123;
+uint vidaId = 123;
 byte[] data = Encoding.UTF8.GetBytes("Hello, World!");
-var r = await wallet.SendVMData(vmId, data);
+var response = await wallet.SendVidaData(vidaId, data);
 
-if(r.isSuccess) {
-    Console.WriteLine("Transcation Hash: " + r.Message);
+if(response.Success) {
+   	Console.WriteLine("Transcation Hash: " + response.Hash);
 } else {
-    Console.WriteLine("Error: " + r.Error);
+	Console.WriteLine("Error: " + response.Error);
 }
 ```
 

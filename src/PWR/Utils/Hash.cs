@@ -6,7 +6,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Security;
 
-namespace PWR
+namespace PWR.Utils
 {
     public static class Hash
     {
