@@ -10,8 +10,8 @@ namespace ExampleApp;
 
 class App
 {
-    private static readonly PwrApiSdk sdk = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
-    private static PwrWallet wallet = new PwrWallet("demand april length soap cash concert shuffle result force mention fringe slim");
+    private static readonly RPC sdk = new RPC("https://pwrrpc.pwrlabs.io/");
+    private static Wallet wallet = new Wallet("demand april length soap cash concert shuffle result force mention fringe slim");
     private const long vidaId = 848796;
     private const ulong startingBlockNumber = 241741;
 
@@ -31,17 +31,17 @@ class App
         {
             if (File.Exists(walletFile))
             {
-                wallet = PwrWallet.LoadWallet(walletFile, password);
+                wallet = Wallet.LoadWallet(walletFile, password);
             }
             else
             {
-                wallet = new PwrWallet("demand april length soap cash concert shuffle result force mention fringe slim");
+                wallet = new Wallet("demand april length soap cash concert shuffle result force mention fringe slim");
                 wallet.StoreWallet(walletFile, password);
             }
         }
         catch
         {
-            wallet = new PwrWallet(12);
+            wallet = new Wallet(12);
             wallet.StoreWallet(walletFile, password);
         }
 

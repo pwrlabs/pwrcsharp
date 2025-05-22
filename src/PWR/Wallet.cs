@@ -12,20 +12,20 @@ using PWR.Utils;
 
 namespace PWR;
 
-public class PwrWallet {
-    private readonly PwrApiSdk _apiSdk;
+public class Wallet {
+    private readonly RPC _apiSdk;
     private readonly TransactionBuilder _txnBuilder;
     private readonly AsymmetricCipherKeyPair _keyPair;
     private readonly string _seedPhrase;
     private readonly byte[] _address;
 
     // Constructor with a seed phrase
-    public PwrWallet(int wordCount, PwrApiSdk? apiSdk = null) {
+    public Wallet(int wordCount, RPC? apiSdk = null) {
         if (wordCount != 12 && wordCount != 15 && wordCount != 18 && wordCount != 21 && wordCount != 24) {
             throw new ArgumentException("Word count must be one of 12, 15, 18, 21, or 24");
         }
 
-        _apiSdk = apiSdk ?? new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        _apiSdk = apiSdk ?? new RPC("https://pwrrpc.pwrlabs.io/");
 
         // Calculate entropy bytes based on word count
         int entropyBytes;
@@ -65,8 +65,8 @@ public class PwrWallet {
         _txnBuilder = new TransactionBuilder();
     }
 
-    public PwrWallet(string seedPhrase, PwrApiSdk? apiSdk = null) {
-        _apiSdk = apiSdk ?? new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+    public Wallet(string seedPhrase, RPC? apiSdk = null) {
+        _apiSdk = apiSdk ?? new RPC("https://pwrrpc.pwrlabs.io/");
         _seedPhrase = seedPhrase;
 
         byte[] seedPhraseBytes = Encoding.UTF8.GetBytes(seedPhrase);
@@ -183,8 +183,8 @@ public class PwrWallet {
     /// </summary>
     /// <param name="path">Path to the encrypted wallet file</param>
     /// <param name="password">Password to decrypt the seed phrase</param>
-    /// <returns>A PwrWallet instance if successful, null otherwise</returns>
-    public static PwrWallet LoadWallet(string path, string password)
+    /// <returns>A Wallet instance if successful, null otherwise</returns>
+    public static Wallet LoadWallet(string path, string password)
     {
         try
         {
@@ -192,7 +192,7 @@ public class PwrWallet {
             byte[] seedPhraseBytes = AES256.Decrypt(encryptedData, password);
             string seedPhrase = Encoding.UTF8.GetString(seedPhraseBytes);
 
-            return new PwrWallet(seedPhrase);
+            return new Wallet(seedPhrase);
         }
         catch (Exception ex)
         {

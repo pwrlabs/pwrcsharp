@@ -50,20 +50,20 @@ using PWR.Models;
 **Set your RPC node:**
 
 ```csharp
-var rpc = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+var rpc = new RPC("https://pwrrpc.pwrlabs.io/");
 ```
 
 **Generate a new random wallet:**
 
 ```csharp
-var wallet = new PwrWallet(12); 
+var wallet = new Wallet(12); 
 ```
 
 **Import wallet by Seed Phrase:**
 
 ```csharp
 string seedPhrase = "your seed phrase here";
-var wallet = new PwrWallet(seedPhrase); 
+var wallet = new Wallet(seedPhrase); 
 ```
 
 **Get wallet address:**

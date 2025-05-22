@@ -16,7 +16,7 @@ namespace PWR.Utils
     /// </summary>
     public class VidaTransactionSubscription
     {
-        private readonly PwrApiSdk _pwrSdk;
+        private readonly RPC _pwrSdk;
         private readonly ulong _vidaId;
         private readonly ulong _startingBlock;
         private ulong _latestCheckedBlock;
@@ -36,7 +36,7 @@ namespace PWR.Utils
         /// <param name="startingBlock">The block number to start checking from</param>
         /// <param name="handler">The handler for processing transactions</param>
         /// <param name="pollInterval">Interval in milliseconds between polling for new blocks</param>
-        public VidaTransactionSubscription(PwrApiSdk pwrSdk, ulong vidaId, ulong startingBlock, VidaTransactionHandler handler, int pollInterval = 100)
+        public VidaTransactionSubscription(RPC pwrSdk, ulong vidaId, ulong startingBlock, VidaTransactionHandler handler, int pollInterval = 100)
         {
             _pwrSdk = pwrSdk ?? throw new ArgumentNullException(nameof(pwrSdk));
             _vidaId = vidaId;
@@ -196,7 +196,7 @@ namespace PWR.Utils
         /// <summary>
         /// Gets the PWR SDK instance used by this subscription
         /// </summary>
-        public PwrApiSdk GetPwrApiSdk()
+        public RPC GetPwrApiSdk()
         {
             return _pwrSdk;
         }

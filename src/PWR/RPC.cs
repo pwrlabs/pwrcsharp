@@ -11,12 +11,12 @@ namespace PWR;
 /// <summary>
 /// Provides methods to interact with the PWR blockchain via RPC calls.
 /// </summary>
-public class PwrApiSdk
+public class RPC
 {
     private readonly string _rpcNodeUrl;
     private readonly HttpClient _httpClient;
 
-    public PwrApiSdk(string rpcNodeUrl, HttpClient? httpClient = null)
+    public RPC(string rpcNodeUrl, HttpClient? httpClient = null)
     {
         _rpcNodeUrl = rpcNodeUrl ?? throw new InvalidOperationException("RPC Node URL cannot be null");
         _httpClient = httpClient ?? new HttpClient();

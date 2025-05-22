@@ -11,7 +11,7 @@ class Vidas
 {
     public static async Task Run()
     {
-        var rpc = new PwrApiSdk("https://pwrrpc.pwrlabs.io/");
+        var rpc = new RPC("https://pwrrpc.pwrlabs.io/");
         ulong vidaId = 1; // Replace with your VIDA's ID
 
         // Since our VIDA is global chat room and we don't care about historical messages,
