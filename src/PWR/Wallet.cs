@@ -140,6 +140,14 @@ public class Wallet {
     }
 
     /// <summary>
+    /// Retrieves the private key of the wallet.
+    /// </summary>
+    /// <returns>The private key.</returns>
+    public byte[] GetPrivateKey() {
+        return ((FalconPrivateKeyParameters)_keyPair.Private).GetEncoded();
+    }
+
+    /// <summary>
     /// Signs a message with the wallet's private key.
     /// </summary>
     /// <param name="message">The message to sign.</param>
@@ -234,27 +242,30 @@ public class Wallet {
     /// <summary>
     /// Sets the public key of the wallet.
     /// </summary>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the transfer operation.</returns>
-    public async Task<WalletResponse> SetPublicKey(uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetPublicKey(ulong feePerByte, uint nonce) {
         var signed = GetSignedTxn(await _txnBuilder.GetSetPublicKeyTxn(
             GetPublicKey().ToHex(), nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetPublicKey(ulong feePerByte) {
+        return await SetPublicKey(feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetPublicKey() {
-        return await SetPublicKey(await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetPublicKey(await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     /// <summary>
     /// Joins the wallet as a validator.
     /// </summary>
     /// <param name="ip">The IP address of the validator.</param>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the transfer operation.</returns>
-    public async Task<WalletResponse> JoinAsValidator(string ip, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> JoinAsValidator(string ip, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -263,8 +274,11 @@ public class Wallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> JoinAsValidator(string ip, ulong feePerByte) {
+        return await JoinAsValidator(ip, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> JoinAsValidator(string ip) {
-        return await JoinAsValidator(ip, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await JoinAsValidator(ip, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     /// <summary>
@@ -272,11 +286,10 @@ public class Wallet {
     /// </summary>
     /// <param name="to">The validator's address.</param>
     /// <param name="amount">The amount of tokens to delegate.</param>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the delegate operation.</returns>
-    public async Task<WalletResponse> Delegate(string to, ulong amount,
-                                                    uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> Delegate(string to, ulong amount, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -285,18 +298,21 @@ public class Wallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> Delegate(string to, ulong amount, ulong feePerByte) {
+        return await Delegate(to, amount, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> Delegate(string to, ulong amount) {
-        return await Delegate(to, amount, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await Delegate(to, amount, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     /// <summary>
     /// Changes the IP address of the validator.
     /// </summary>
     /// <param name="ip">The IP address of the validator.</param>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the transfer operation.</returns>
-    public async Task<WalletResponse> ChangeIp(string ip, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ChangeIp(string ip, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -305,17 +321,20 @@ public class Wallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ChangeIp(string ip, ulong feePerByte) {
+        return await ChangeIp(ip, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ChangeIp(string ip) {
-        return await ChangeIp(ip, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ChangeIp(ip, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     /// <summary>
     /// Claims the active node spot of the wallet.
     /// </summary>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the claim operation.</returns>
-    public async Task<WalletResponse> ClaimActiveNodeSpot(uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ClaimActiveNodeSpot(ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -324,8 +343,11 @@ public class Wallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ClaimActiveNodeSpot(ulong feePerByte) {
+        return await ClaimActiveNodeSpot(feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ClaimActiveNodeSpot() {
-        return await ClaimActiveNodeSpot(await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ClaimActiveNodeSpot(await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     /// <summary>
@@ -333,11 +355,10 @@ public class Wallet {
     /// </summary>
     /// <param name="to">The recipient's address.</param>
     /// <param name="amount">The amount of tokens to transfer.</param>
-    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <param name="feePerByte">The fee per byte of the transaction.</param>
+    /// <param name="nonce">The nonce value of the transaction.</param>
     /// <returns>The response of the transfer operation.</returns>
-    public async Task<WalletResponse> TransferPWR(string to, ulong amount,
-                                                    uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> TransferPWR(string to, ulong amount, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -346,12 +367,15 @@ public class Wallet {
 
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> TransferPWR(string to, ulong amount, ulong feePerByte) {
+        return await TransferPWR(to, amount, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> TransferPWR(string to, ulong amount) {
-        return await TransferPWR(to, amount, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await TransferPWR(to, amount, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     // --- Proposal Transactions ---
-    public async Task<WalletResponse> ProposeChangeEarlyWithdrawPenalty(string title, string description, ulong withdrawPenaltyTime, ulong withdrawPenalty, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeEarlyWithdrawPenalty(string title, string description, ulong withdrawPenaltyTime, ulong withdrawPenalty, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -359,11 +383,14 @@ public class Wallet {
             title, description, withdrawPenaltyTime, withdrawPenalty, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeEarlyWithdrawPenalty(string title, string description, ulong withdrawPenaltyTime, ulong withdrawPenalty, ulong feePerByte) {
+        return await ProposeChangeEarlyWithdrawPenalty(title, description, withdrawPenaltyTime, withdrawPenalty, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeEarlyWithdrawPenalty(string title, string description, ulong withdrawPenaltyTime, ulong withdrawPenalty) {
-        return await ProposeChangeEarlyWithdrawPenalty(title, description, withdrawPenaltyTime, withdrawPenalty, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeEarlyWithdrawPenalty(title, description, withdrawPenaltyTime, withdrawPenalty, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeFeePerByte(string title, string description, ulong newFeePerByte, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeFeePerByte(string title, string description, ulong newFeePerByte, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -371,11 +398,14 @@ public class Wallet {
             title, description, newFeePerByte, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeFeePerByte(string title, string description, ulong newFeePerByte, ulong feePerByte) {
+        return await ProposeChangeFeePerByte(title, description, newFeePerByte, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeFeePerByte(string title, string description, ulong newFeePerByte) {
-        return await ProposeChangeFeePerByte(title, description, newFeePerByte, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeFeePerByte(title, description, newFeePerByte, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeMaxBlockSize(string title, string description, ulong maxBlockSize, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeMaxBlockSize(string title, string description, ulong maxBlockSize, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -383,11 +413,14 @@ public class Wallet {
             title, description, maxBlockSize, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeMaxBlockSize(string title, string description, ulong maxBlockSize, ulong feePerByte) {
+        return await ProposeChangeMaxBlockSize(title, description, maxBlockSize, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeMaxBlockSize(string title, string description, ulong maxBlockSize) {
-        return await ProposeChangeMaxBlockSize(title, description, maxBlockSize, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeMaxBlockSize(title, description, maxBlockSize, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeMaxTxnSize(string title, string description, ulong maxTxnSize, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeMaxTxnSize(string title, string description, ulong maxTxnSize, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -395,11 +428,14 @@ public class Wallet {
             title, description, maxTxnSize, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeMaxTxnSize(string title, string description, ulong maxTxnSize, ulong feePerByte) {
+        return await ProposeChangeMaxTxnSize(title, description, maxTxnSize, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeMaxTxnSize(string title, string description, ulong maxTxnSize) {
-        return await ProposeChangeMaxTxnSize(title, description, maxTxnSize, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeMaxTxnSize(title, description, maxTxnSize, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeOverallBurnPercentage(string title, string description, ulong burnPercentage, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeOverallBurnPercentage(string title, string description, ulong burnPercentage, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -407,11 +443,14 @@ public class Wallet {
             title, description, burnPercentage, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeOverallBurnPercentage(string title, string description, ulong burnPercentage, ulong feePerByte) {
+        return await ProposeChangeOverallBurnPercentage(title, description, burnPercentage, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeOverallBurnPercentage(string title, string description, ulong burnPercentage) {
-        return await ProposeChangeOverallBurnPercentage(title, description, burnPercentage, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeOverallBurnPercentage(title, description, burnPercentage, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeRewardPerYear(string title, string description, ulong rewardPerYear, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeRewardPerYear(string title, string description, ulong rewardPerYear, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -419,11 +458,14 @@ public class Wallet {
             title, description, rewardPerYear, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeRewardPerYear(string title, string description, ulong rewardPerYear, ulong feePerByte) {
+        return await ProposeChangeRewardPerYear(title, description, rewardPerYear, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeRewardPerYear(string title, string description, ulong rewardPerYear) {
-        return await ProposeChangeRewardPerYear(title, description, rewardPerYear, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeRewardPerYear(title, description, rewardPerYear, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeValidatorCountLimit(string title, string description, ulong validatorCountLimit, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeValidatorCountLimit(string title, string description, ulong validatorCountLimit, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -431,11 +473,14 @@ public class Wallet {
             title, description, validatorCountLimit, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeValidatorCountLimit(string title, string description, ulong validatorCountLimit, ulong feePerByte) {
+        return await ProposeChangeValidatorCountLimit(title, description, validatorCountLimit, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeValidatorCountLimit(string title, string description, ulong validatorCountLimit) {
-        return await ProposeChangeValidatorCountLimit(title, description, validatorCountLimit, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeValidatorCountLimit(title, description, validatorCountLimit, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeValidatorJoiningFee(string title, string description, ulong joiningFee, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeValidatorJoiningFee(string title, string description, ulong joiningFee, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -443,11 +488,14 @@ public class Wallet {
             title, description, joiningFee, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeValidatorJoiningFee(string title, string description, ulong joiningFee, ulong feePerByte) {
+        return await ProposeChangeValidatorJoiningFee(title, description, joiningFee, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeValidatorJoiningFee(string title, string description, ulong joiningFee) {
-        return await ProposeChangeValidatorJoiningFee(title, description, joiningFee, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeValidatorJoiningFee(title, description, joiningFee, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeVidaIdClaimingFee(string title, string description, ulong claimingFee, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeVidaIdClaimingFee(string title, string description, ulong claimingFee, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -455,11 +503,14 @@ public class Wallet {
             title, description, claimingFee, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeVidaIdClaimingFee(string title, string description, ulong claimingFee, ulong feePerByte) {
+        return await ProposeChangeVidaIdClaimingFee(title, description, claimingFee, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeVidaIdClaimingFee(string title, string description, ulong claimingFee) {
-        return await ProposeChangeVidaIdClaimingFee(title, description, claimingFee, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeVidaIdClaimingFee(title, description, claimingFee, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeChangeVidaOwnerTxnFeeShare(string title, string description, ulong feeShare, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeChangeVidaOwnerTxnFeeShare(string title, string description, ulong feeShare, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -467,11 +518,14 @@ public class Wallet {
             title, description, feeShare, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeChangeVidaOwnerTxnFeeShare(string title, string description, ulong feeShare, ulong feePerByte) {
+        return await ProposeChangeVidaOwnerTxnFeeShare(title, description, feeShare, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeChangeVidaOwnerTxnFeeShare(string title, string description, ulong feeShare) {
-        return await ProposeChangeVidaOwnerTxnFeeShare(title, description, feeShare, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeChangeVidaOwnerTxnFeeShare(title, description, feeShare, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ProposeOther(string title, string description, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ProposeOther(string title, string description, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -479,11 +533,14 @@ public class Wallet {
             title, description, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ProposeOther(string title, string description, ulong feePerByte) {
+        return await ProposeOther(title, description, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ProposeOther(string title, string description) {
-        return await ProposeOther(title, description, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ProposeOther(title, description, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> VoteOnProposal(string proposalHash, byte vote, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> VoteOnProposal(string proposalHash, byte vote, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -491,12 +548,15 @@ public class Wallet {
             proposalHash, vote, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> VoteOnProposal(string proposalHash, byte vote, ulong feePerByte) {
+        return await VoteOnProposal(proposalHash, vote, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> VoteOnProposal(string proposalHash, byte vote) {
-        return await VoteOnProposal(proposalHash, vote, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await VoteOnProposal(proposalHash, vote, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     // --- Guardian Transactions ---
-    public async Task<WalletResponse> GuardianApproval(List<byte[]> transactions, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> GuardianApproval(List<byte[]> transactions, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -504,11 +564,14 @@ public class Wallet {
             transactions, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> GuardianApproval(List<byte[]> transactions, ulong feePerByte) {
+        return await GuardianApproval(transactions, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> GuardianApproval(List<byte[]> transactions) {
-        return await GuardianApproval(transactions, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await GuardianApproval(transactions, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> RemoveGuardian(uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> RemoveGuardian(ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -516,11 +579,14 @@ public class Wallet {
             nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> RemoveGuardian(ulong feePerByte) {
+        return await RemoveGuardian(feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> RemoveGuardian() {
-        return await RemoveGuardian(await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await RemoveGuardian(await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SetGuardian(ulong expiryDate, string guardianAddress, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetGuardian(ulong expiryDate, string guardianAddress, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -528,12 +594,15 @@ public class Wallet {
             expiryDate, guardianAddress, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetGuardian(ulong expiryDate, string guardianAddress, ulong feePerByte) {
+        return await SetGuardian(expiryDate, guardianAddress, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetGuardian(ulong expiryDate, string guardianAddress) {
-        return await SetGuardian(expiryDate, guardianAddress, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetGuardian(expiryDate, guardianAddress, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     // --- Staking Transactions ---
-    public async Task<WalletResponse> MoveStake(ulong sharesAmount, string fromValidator, string toValidator, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> MoveStake(ulong sharesAmount, string fromValidator, string toValidator, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -541,11 +610,14 @@ public class Wallet {
             sharesAmount, fromValidator, toValidator, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> MoveStake(ulong sharesAmount, string fromValidator, string toValidator, ulong feePerByte) {
+        return await MoveStake(sharesAmount, fromValidator, toValidator, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> MoveStake(ulong sharesAmount, string fromValidator, string toValidator) {
-        return await MoveStake(sharesAmount, fromValidator, toValidator, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await MoveStake(sharesAmount, fromValidator, toValidator, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> RemoveValidator(string validatorAddress, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> RemoveValidator(string validatorAddress, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -553,11 +625,14 @@ public class Wallet {
             validatorAddress, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> RemoveValidator(string validatorAddress, ulong feePerByte) {
+        return await RemoveValidator(validatorAddress, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> RemoveValidator(string validatorAddress) {
-        return await RemoveValidator(validatorAddress, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await RemoveValidator(validatorAddress, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> Withdraw(ulong sharesAmount, string validator, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> Withdraw(ulong sharesAmount, string validator, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -565,12 +640,15 @@ public class Wallet {
             sharesAmount, validator, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> Withdraw(ulong sharesAmount, string validator, ulong feePerByte) {
+        return await Withdraw(sharesAmount, validator, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> Withdraw(ulong sharesAmount, string validator) {
-        return await Withdraw(sharesAmount, validator, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await Withdraw(sharesAmount, validator, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
     // --- VIDA Transactions ---
-    public async Task<WalletResponse> ClaimVidaId(ulong vidaId, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ClaimVidaId(ulong vidaId, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -578,11 +656,14 @@ public class Wallet {
             vidaId, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ClaimVidaId(ulong vidaId, ulong feePerByte) {
+        return await ClaimVidaId(vidaId, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ClaimVidaId(ulong vidaId) {
-        return await ClaimVidaId(vidaId, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ClaimVidaId(vidaId, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> ConduitApproval(ulong vidaId, List<byte[]> transactions, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> ConduitApproval(ulong vidaId, List<byte[]> transactions, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -590,11 +671,14 @@ public class Wallet {
             vidaId, transactions, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> ConduitApproval(ulong vidaId, List<byte[]> transactions, ulong feePerByte) {
+        return await ConduitApproval(vidaId, transactions, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> ConduitApproval(ulong vidaId, List<byte[]> transactions) {
-        return await ConduitApproval(vidaId, transactions, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await ConduitApproval(vidaId, transactions, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SendPayableVidaData(ulong vidaId, byte[] data, ulong value, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SendPayableVidaData(ulong vidaId, byte[] data, ulong value, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -602,17 +686,24 @@ public class Wallet {
             vidaId, data, value, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SendPayableVidaData(ulong vidaId, byte[] data, ulong value, ulong feePerByte) {
+        return await SendPayableVidaData(vidaId, data, value, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SendPayableVidaData(ulong vidaId, byte[] data, ulong value) {
-        return await SendPayableVidaData(vidaId, data, value, await GetNonce(), await _apiSdk.GetFeePerByte());
-    }
-    public async Task<WalletResponse> SendVidaData(ulong vidaId, byte[] data, uint nonce, ulong feePerByte) {
-        return await SendPayableVidaData(vidaId, data, 0, nonce, feePerByte);
-    }
-    public async Task<WalletResponse> SendVidaData(ulong vidaId, byte[] data) {
-        return await SendPayableVidaData(vidaId, data, 0, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SendPayableVidaData(vidaId, data, value, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> RemoveConduits(ulong vidaId, List<string> conduits, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SendVidaData(ulong vidaId, byte[] data, ulong feePerByte, uint nonce) {
+        return await SendPayableVidaData(vidaId, data, 0, feePerByte, nonce);
+    }
+    public async Task<WalletResponse> SendVidaData(ulong vidaId, byte[] data, ulong feePerByte) {
+        return await SendVidaData(vidaId, data, feePerByte, await GetNonce());
+    }
+    public async Task<WalletResponse> SendVidaData(ulong vidaId, byte[] data) {
+        return await SendVidaData(vidaId, data, await _apiSdk.GetFeePerByte(), await GetNonce());
+    }
+
+    public async Task<WalletResponse> RemoveConduits(ulong vidaId, List<string> conduits, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -620,11 +711,14 @@ public class Wallet {
             vidaId, conduits, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> RemoveConduits(ulong vidaId, List<string> conduits, ulong feePerByte) {
+        return await RemoveConduits(vidaId, conduits, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> RemoveConduits(ulong vidaId, List<string> conduits) {
-        return await RemoveConduits(vidaId, conduits, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await RemoveConduits(vidaId, conduits, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SetConduitMode(ulong vidaId, byte mode, ulong conduitThreshold, List<string> conduits, List<(string, ulong)> conduitsWithVotingPower, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetConduitMode(ulong vidaId, byte mode, ulong conduitThreshold, List<string> conduits, List<(string, ulong)> conduitsWithVotingPower, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -632,11 +726,14 @@ public class Wallet {
             vidaId, mode, conduitThreshold, conduits, conduitsWithVotingPower, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetConduitMode(ulong vidaId, byte mode, ulong conduitThreshold, List<string> conduits, List<(string, ulong)> conduitsWithVotingPower, ulong feePerByte) {
+        return await SetConduitMode(vidaId, mode, conduitThreshold, conduits, conduitsWithVotingPower, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetConduitMode(ulong vidaId, byte mode, ulong conduitThreshold, List<string> conduits, List<(string, ulong)> conduitsWithVotingPower) {
-        return await SetConduitMode(vidaId, mode, conduitThreshold, conduits, conduitsWithVotingPower, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetConduitMode(vidaId, mode, conduitThreshold, conduits, conduitsWithVotingPower, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SetVidaPrivateState(ulong vidaId, bool privateState, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetVidaPrivateState(ulong vidaId, bool privateState, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -644,11 +741,14 @@ public class Wallet {
             vidaId, privateState, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetVidaPrivateState(ulong vidaId, bool privateState, ulong feePerByte) {
+        return await SetVidaPrivateState(vidaId, privateState, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetVidaPrivateState(ulong vidaId, bool privateState) {
-        return await SetVidaPrivateState(vidaId, privateState, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetVidaPrivateState(vidaId, privateState, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SetVidaToAbsolutePublic(ulong vidaId, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetVidaToAbsolutePublic(ulong vidaId, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -656,11 +756,14 @@ public class Wallet {
             vidaId, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetVidaToAbsolutePublic(ulong vidaId, ulong feePerByte) {
+        return await SetVidaToAbsolutePublic(vidaId, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetVidaToAbsolutePublic(ulong vidaId) {
-        return await SetVidaToAbsolutePublic(vidaId, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetVidaToAbsolutePublic(vidaId, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> AddVidaSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> AddVidaSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -668,11 +771,14 @@ public class Wallet {
             vidaId, sponsoredAddresses, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> AddVidaSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, ulong feePerByte) {
+        return await AddVidaSponsoredAddresses(vidaId, sponsoredAddresses, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> AddVidaSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses) {
-        return await AddVidaSponsoredAddresses(vidaId, sponsoredAddresses, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await AddVidaSponsoredAddresses(vidaId, sponsoredAddresses, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> AddVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> AddVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -680,11 +786,14 @@ public class Wallet {
             vidaId, allowedSenders, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> AddVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, ulong feePerByte) {
+        return await AddVidaAllowedSenders(vidaId, allowedSenders, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> AddVidaAllowedSenders(ulong vidaId, List<string> allowedSenders) {
-        return await AddVidaAllowedSenders(vidaId, allowedSenders, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await AddVidaAllowedSenders(vidaId, allowedSenders, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> RemoveVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> RemoveVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -692,11 +801,14 @@ public class Wallet {
             vidaId, allowedSenders, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> RemoveVidaAllowedSenders(ulong vidaId, List<string> allowedSenders, ulong feePerByte) {
+        return await RemoveVidaAllowedSenders(vidaId, allowedSenders, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> RemoveVidaAllowedSenders(ulong vidaId, List<string> allowedSenders) {
-        return await RemoveVidaAllowedSenders(vidaId, allowedSenders, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await RemoveVidaAllowedSenders(vidaId, allowedSenders, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> RemoveSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> RemoveSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -704,11 +816,14 @@ public class Wallet {
             vidaId, sponsoredAddresses, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> RemoveSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses, ulong feePerByte) {
+        return await RemoveSponsoredAddresses(vidaId, sponsoredAddresses, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> RemoveSponsoredAddresses(ulong vidaId, List<string> sponsoredAddresses) {
-        return await RemoveSponsoredAddresses(vidaId, sponsoredAddresses, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await RemoveSponsoredAddresses(vidaId, sponsoredAddresses, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> SetPWRTransferRights(ulong vidaId, bool ownerCanTransferPwr, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> SetPWRTransferRights(ulong vidaId, bool ownerCanTransferPwr, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -716,11 +831,14 @@ public class Wallet {
             vidaId, ownerCanTransferPwr, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> SetPWRTransferRights(ulong vidaId, bool ownerCanTransferPwr, ulong feePerByte) {
+        return await SetPWRTransferRights(vidaId, ownerCanTransferPwr, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> SetPWRTransferRights(ulong vidaId, bool ownerCanTransferPwr) {
-        return await SetPWRTransferRights(vidaId, ownerCanTransferPwr, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await SetPWRTransferRights(vidaId, ownerCanTransferPwr, await _apiSdk.GetFeePerByte(), await GetNonce());
     }
 
-    public async Task<WalletResponse> TransferPWRFromVida(ulong vidaId, string receiver, ulong amount, uint nonce, ulong feePerByte) {
+    public async Task<WalletResponse> TransferPWRFromVida(ulong vidaId, string receiver, ulong amount, ulong feePerByte, uint nonce) {
         var response = await MakeSurePublicKeyIsSet();
         if (response != null && !response.Success) return response;
 
@@ -728,8 +846,15 @@ public class Wallet {
             vidaId, receiver, amount, nonce, await _apiSdk.GetChainId(), feePerByte, GetAddress()));
         return CreateWalletResponse(await _apiSdk.BroadcastTxn(signed), signed);
     }
+    public async Task<WalletResponse> TransferPWRFromVida(ulong vidaId, string receiver, ulong amount, ulong feePerByte) {
+        return await TransferPWRFromVida(vidaId, receiver, amount, feePerByte, await GetNonce());
+    }
     public async Task<WalletResponse> TransferPWRFromVida(ulong vidaId, string receiver, ulong amount) {
-        return await TransferPWRFromVida(vidaId, receiver, amount, await GetNonce(), await _apiSdk.GetFeePerByte());
+        return await TransferPWRFromVida(vidaId, receiver, amount, await _apiSdk.GetFeePerByte(), await GetNonce());
+    }
+
+    public RPC GetRpc() {
+        return _apiSdk;
     }
 
     private async Task<WalletResponse?> MakeSurePublicKeyIsSet() {

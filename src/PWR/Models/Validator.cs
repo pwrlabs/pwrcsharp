@@ -22,7 +22,7 @@ namespace PWR.Models
         public ulong VotingPower { get; }
 
         [JsonProperty("totalShares")]
-        public ulong Shares { get; }
+        public ulong TotalShares { get; }
 
         [JsonProperty("delegatorsCount")]
         public uint DelegatorsCount { get; }
@@ -30,39 +30,36 @@ namespace PWR.Models
         [JsonProperty("status")]
         public string Status { get; }
 
-        [JsonProperty("delegators")]    
-        public List<Delegator>? Delegators { get; private set; }
+        [JsonProperty("lastCreatedBlock")]
+        public ulong LastCreatedBlock { get; }
         
         private readonly HttpClient _httpClient;
 
-        public Validator(string address, string ip, bool badActor, ulong votingPower, ulong shares, uint delegatorsCount, string status, HttpClient httpClient)
+        public Validator(
+            string address,
+            string ip,
+            bool badActor,
+            ulong votingPower,
+            ulong totalShares,
+            uint delegatorsCount,
+            string status,
+            ulong lastCreatedBlock,
+            HttpClient httpClient)
         {
             Address = address;
             Ip = ip;
             BadActor = badActor;
             VotingPower = votingPower;
-            Shares = shares;
+            TotalShares = totalShares;
             DelegatorsCount = delegatorsCount;
             Status = status;
+            LastCreatedBlock = lastCreatedBlock;
             _httpClient = httpClient;
         }
 
-        public Validator(string address, string ip, bool badActor, ulong votingPower, ulong shares, uint delegatorsCount, string status, List<Delegator> delegators, HttpClient httpClient)
-        {
-            Address = address;
-            Ip = ip;
-            BadActor = badActor;
-            VotingPower = votingPower;
-            Shares = shares;
-            DelegatorsCount = delegatorsCount;
-            Status = status;
-            Delegators = delegators;
-            _httpClient = httpClient;
-        }
-        
         public override string ToString()
         {
-            return $"Address: {Address}, IP: {Ip}, Bad Actor: {BadActor}, Voting Power: {VotingPower}, Shares: {Shares}, Delegators Count: {DelegatorsCount}, Status: {Status}";
+            return $"Validator: Address={Address}, IP={Ip}, VotingPower={VotingPower}, TotalShares={TotalShares}, Status={Status}, LastCreatedBlock={LastCreatedBlock}";
         }
         
         public async Task<List<Delegator>> GetDelegators(string rpcNodeUrl)

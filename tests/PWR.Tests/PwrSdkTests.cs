@@ -1,4 +1,3 @@
-
 using PWR;
 using PWR.Models;
 namespace PWR.Tests;
@@ -14,13 +13,19 @@ public class PwrSdkTests
         Assert.NotEqual(0UL, r);
     }
 
-    // [Fact]
-    // public async Task TestGetVidaDataTransactions()
-    // {
-    //     var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-    //     List<VidaDataTxn> vidaDataTxns = await sdk.GetVidaDataTransactions(85411, 85420, 123);
-    //     Assert.NotEmpty(vidaDataTxns);
-    // }
+    [Fact]
+    public async Task TestGetVidaDataTransactions()
+    {
+        var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
+        ulong startingBlock = 85411;
+        ulong endingBlock = 85420;
+        ulong vidaId = 123;
+
+        List<VidaDataTxn> vidaDataTxns = await sdk.GetVidaDataTransactions(startingBlock, endingBlock, vidaId);
+        Assert.NotEmpty(vidaDataTxns);
+        Assert.True(vidaDataTxns.Any());
+        Assert.Equal(vidaId, vidaDataTxns[0].VidaId);
+    }
 
     [Fact]
     public async Task TestGetActiveVotingPower()
@@ -65,7 +70,7 @@ public class PwrSdkTests
         var wallet = new Wallet(12);
         
         var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-        var data = await wallet.GetBalance();
+        var data = await sdk.GetBalanceOfAddress(wallet.GetAddress());
         Assert.Equal(0UL, data);
     }
 
@@ -75,7 +80,7 @@ public class PwrSdkTests
         var wallet = new Wallet(12);
         
         var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-        var data = await wallet.GetNonce();
+        var data = await sdk.GetNonceOfAddress(wallet.GetAddress());
         Assert.Equal(0UL, data);
     }
     
@@ -92,7 +97,7 @@ public class PwrSdkTests
     {
         var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
         var r = await sdk.GetBlockByNumber(10);
-        Assert.Equal(10UL, r.Number);
+        Assert.Equal(10UL, r.BlockNumber);
     }
     
     [Fact]
@@ -119,13 +124,13 @@ public class PwrSdkTests
         Assert.True(r >= 0);
     }
     
-    // [Fact]
-    // public async Task TestGetAllValidators()
-    // {
-    //     var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-    //     var r = await sdk.GetAllValidators();
-    //     Assert.True(r.Any());
-    // }
+    [Fact]
+    public async Task TestGetAllValidators()
+    {
+        var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetAllValidators();
+        Assert.True(r.Any());
+    }
 
     [Fact]
     public async Task TestGetStandbyValidators()
@@ -135,13 +140,13 @@ public class PwrSdkTests
         Assert.True(r.Any());
     }
 
-    // [Fact]
-    // public async Task TestGetActiveValidators()
-    // {
-    //     var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-    //     var r = await sdk.GetActiveValidators();
-    //     Assert.True(r.Any());
-    // }
+    [Fact]
+    public async Task TestGetActiveValidators()
+    {
+        var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetActiveValidators();
+        Assert.True(r.Any());
+    }
 
     [Fact]
     public async Task TestGetOwnerOfVidaIds()
@@ -208,12 +213,13 @@ public class PwrSdkTests
         Assert.Equal("0x023C98B9E4B6C2E94DB8A724D1131F8E33F8D8EB", r.Address); 
     }
 
-    // [Fact]
-    // public async Task TestGetDelegatees()
-    // {
-    //     var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
-    //     var r = await sdk.GetDelegatees("0xe68191b7913e72e6f1759531fbfaa089ff02308a");
-    //     Console.WriteLine("RRRR:" + r);
-    //     Assert.True(1==1); 
-    // }
+    [Fact]
+    public async Task TestGetDelegatees()
+    {
+        var sdk = new RPC("https://pwrrpc.pwrlabs.io/");
+        var r = await sdk.GetDelegatees("0x05D5A44E31118C736EA303DC77C834B76D262F1B");
+        Assert.NotEmpty(r);
+        Assert.True(r.Any());
+        Assert.Equal("0x05D5A44E31118C736EA303DC77C834B76D262F1B", r[0].Address);
+    }
 }

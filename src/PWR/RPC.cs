@@ -414,6 +414,13 @@ public class RPC
         
         var responseString = await response.Content.ReadAsStringAsync();
 
+        // Pre-process the JSON string to quote large numbers in totalShares
+        var regex = new Regex(@"""totalShares"":\s*(\d+)");
+        responseString = regex.Replace(responseString, match => {
+            var number = match.Groups[1].Value;
+            return $@"""totalShares"": ""{number}""";
+        });
+
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
         var vidaDataTxnsJson = responseData["transactions"].ToString();
         var vidaDataTxnList = JsonConvert.DeserializeObject<List<VidaDataTxn>>(vidaDataTxnsJson);
@@ -449,25 +456,93 @@ public class RPC
     /// </summary>
     /// <param name="address">The address of the user.</param>
     /// <returns>A list of <see cref="Validator"/> representing the delegatees.</returns>
-    public  async Task<List<Validator>> GetDelegatees(string address)  {
+    public async Task<List<Validator>> GetDelegatees(string address)  {
         ValidateAddress(address);
         var url = $"{_rpcNodeUrl}/delegateesOfUser?userAddress={address}";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        var tk = JsonConvert.DeserializeObject<JArray>(responseData["delegatees"].ToString());
+        if (responseData["validators"] == null)
+            return new List<Validator>();
+        var tk = JsonConvert.DeserializeObject<JArray>(responseData["validators"].ToString());
         List<Validator> validators = new List<Validator>();
         foreach(var token in tk){
-        var validator = new Validator(
-            address : token["address"].Value<string>(),
-            ip : token["ip"]?.Value<string>() ?? "",
-            badActor : token["badActor"]?.Value<bool>() ?? false,
-            votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-            shares : token["totalShares"]?.Value<ulong>() ?? 0,
-            delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-            status : token["status"]?.Value<string>() ?? "active",
-            httpClient : _httpClient
-        );
-        validators.Add(validator);
+            // Safely parse values with proper type handling
+            string addressStr = token["address"]?.ToString() ?? "";
+            string ip = token["ip"]?.ToString() ?? "";
+            string status = token["status"]?.ToString() ?? "active";
+            
+            bool badActor = false;
+            if (token["badActor"] != null)
+            {
+                if (token["badActor"].Type == JTokenType.Boolean)
+                {
+                    badActor = token["badActor"].Value<bool>();
+                }
+                else
+                {
+                    bool.TryParse(token["badActor"].ToString(), out badActor);
+                }
+            }
+            
+            ulong votingPower = 0;
+            if (token["votingPower"] != null)
+            {
+                string vpStr = token["votingPower"].ToString();
+                if (!string.IsNullOrEmpty(vpStr))
+                {
+                    ulong.TryParse(vpStr, out votingPower);
+                }
+            }
+            
+            ulong totalShares = 0;
+            if (token["totalShares"] != null)
+            {
+                string sharesStr = token["totalShares"].ToString();
+                if (!string.IsNullOrEmpty(sharesStr))
+                {
+                    if (sharesStr.Length > 20) // Handle very large numbers
+                    {
+                        totalShares = ulong.MaxValue;
+                    }
+                    else
+                    {
+                        ulong.TryParse(sharesStr, out totalShares);
+                    }
+                }
+            }
+            
+            uint delegatorsCount = 0;
+            if (token["delegatorsCount"] != null)
+            {
+                string countStr = token["delegatorsCount"].ToString();
+                if (!string.IsNullOrEmpty(countStr))
+                {
+                    uint.TryParse(countStr, out delegatorsCount);
+                }
+            }
+            
+            ulong lastCreatedBlock = 0;
+            if (token["lastCreatedBlock"] != null)
+            {
+                string lcbStr = token["lastCreatedBlock"].ToString();
+                if (!string.IsNullOrEmpty(lcbStr))
+                {
+                    ulong.TryParse(lcbStr, out lastCreatedBlock);
+                }
+            }
+            
+            var validator = new Validator(
+                address: "0x" + addressStr,
+                ip: ip,
+                badActor: badActor,
+                votingPower: votingPower,
+                totalShares: totalShares,
+                delegatorsCount: delegatorsCount,
+                status: status,
+                lastCreatedBlock: lastCreatedBlock,
+                httpClient: _httpClient
+            );
+            validators.Add(validator);
         }
         return validators;
     }
@@ -477,22 +552,95 @@ public class RPC
     /// </summary>
     /// <param name="validatorAddress">The address of the validator.</param>
     /// <returns>The <see cref="Validator"/> object representing the validator.</returns>
-    public  async Task<Validator> GetValidator(string validatorAddress)  {
+    public async Task<Validator> GetValidator(string validatorAddress)
+    {
         ValidateAddress(validatorAddress);
          
         var url = $"{_rpcNodeUrl}/validator?validatorAddress={validatorAddress}";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
         var token = JsonConvert.DeserializeObject<JObject>(responseData["validator"].ToString());
+
+        // Safely parse values with proper type handling
+        ulong votingPower = 0;
+        if (token["votingPower"] != null)
+        {
+            string vpStr = token["votingPower"].ToString();
+            if (!string.IsNullOrEmpty(vpStr))
+            {
+                if (ulong.TryParse(vpStr, out ulong vp))
+                {
+                    votingPower = vp;
+                }
+            }
+        }
+
+        ulong totalShares = 0;
+        if (token["totalShares"] != null)
+        {
+            string sharesStr = token["totalShares"].ToString();
+            if (!string.IsNullOrEmpty(sharesStr))
+            {
+                if (ulong.TryParse(sharesStr, out ulong shares))
+                {
+                    totalShares = shares;
+                }
+            }
+        }
+
+        ulong lastCreatedBlock = 0;
+        if (token["lastCreatedBlock"] != null)
+        {
+            string lcbStr = token["lastCreatedBlock"].ToString();
+            if (!string.IsNullOrEmpty(lcbStr))
+            {
+                if (ulong.TryParse(lcbStr, out ulong lcb))
+                {
+                    lastCreatedBlock = lcb;
+                }
+            }
+        }
+
+        uint delegatorsCount = 0;
+        if (token["delegatorsCount"] != null)
+        {
+            string countStr = token["delegatorsCount"].ToString();
+            if (!string.IsNullOrEmpty(countStr))
+            {
+                if (uint.TryParse(countStr, out uint count))
+                {
+                    delegatorsCount = count;
+                }
+            }
+        }
+
+        bool badActor = false;
+        if (token["badActor"] != null)
+        {
+            if (token["badActor"].Type == JTokenType.Boolean)
+            {
+                badActor = token["badActor"].Value<bool>();
+            }
+            else
+            {
+                string badActorStr = token["badActor"].ToString();
+                if (!string.IsNullOrEmpty(badActorStr))
+                {
+                    bool.TryParse(badActorStr, out badActor);
+                }
+            }
+        }
+
         var validator = new Validator(
-                address : token["address"].Value<string>(),
-                ip : token["ip"]?.Value<string>() ?? "",
-                badActor : token["badActor"]?.Value<bool>() ?? false,
-                votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-                shares : token["totalShares"]?.Value<ulong>() ?? 0,
-                delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-                status : token["status"]?.Value<string>() ?? "active",
-                httpClient : _httpClient
+            address: token["address"]?.ToString() ?? "",
+            ip: token["ip"]?.ToString() ?? "",
+            badActor: badActor,
+            votingPower: votingPower,
+            totalShares: totalShares,
+            delegatorsCount: delegatorsCount,
+            status: token["status"]?.ToString() ?? "standby",
+            lastCreatedBlock: lastCreatedBlock,
+            httpClient: _httpClient
         );
         return validator;
     }
@@ -673,20 +821,25 @@ public class RPC
         var responseObject = JsonConvert.DeserializeObject<JObject>(response);
         var json = responseObject["block"].ToString();
         var jsonBlock = JsonConvert.DeserializeObject<JObject>(json);
-        ulong timestamp = jsonBlock.Value<ulong>("timestamp");
 
         var blockInstance = new Block(
-            transactionCount: jsonBlock.Value<uint>("transactionCount"),
-            size: jsonBlock.Value<uint>("blockSize"),
-            number: jsonBlock.Value<uint>("blockNumber"),
-            reward: jsonBlock.Value<ulong>("blockReward"),
-            timestamp: timestamp,
-            hash: jsonBlock.Value<string>("blockHash"),
-            submitter: jsonBlock.Value<string>("blockSubmitter"),
-            success: jsonBlock.Value<bool>("success"),
+            processedWithoutCriticalErrors: jsonBlock.Value<bool>("processedWithoutCriticalErrors"),
+            timeStamp: jsonBlock.Value<ulong>("timeStamp"),
+            blockHash: jsonBlock.Value<string>("blockHash"),
+            previousBlockHash: jsonBlock.Value<string>("previousBlockHash"),
+            size: jsonBlock.Value<uint>("size"),
+            proposer: jsonBlock.Value<string>("proposer"),
+            blockNumber: jsonBlock.Value<ulong>("blockNumber"),
+            burnedFees: jsonBlock.Value<ulong>("burnedFees"),
+            rootHash: jsonBlock.Value<string>("rootHash"),
+            blockReward: jsonBlock.Value<ulong>("blockReward"),
             transactions: jsonBlock["transactions"].Select(t =>
-                DeserializeTransaction(t.Value<string>("type"), t, new Newtonsoft.Json.JsonSerializer())
-            ).ToList()
+                new BlockTransaction(
+                    identifier: t.Value<uint>("identifier"),
+                    transactionHash: t.Value<string>("transactionHash")
+                )
+            ).ToList(),
+            newSharesPerSpark: jsonBlock.Value<ulong>("newSharesPerSpark")
         );
         return blockInstance;
           
@@ -765,6 +918,13 @@ public class RPC
             var response = await _httpClient.GetAsync(_rpcNodeUrl + "/allValidators");
             var responseString = await response.Content.ReadAsStringAsync();
 
+            // Pre-process the JSON string to quote large numbers in totalShares
+            var regex = new Regex(@"""totalShares"":\s*(\d+)");
+            responseString = regex.Replace(responseString, match => {
+                var number = match.Groups[1].Value;
+                return $@"""totalShares"": ""{number}""";
+            });
+
             JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
             JArray validatorsArray = (JArray)responseData["validators"];
             List<Validator> validators = new List<Validator>();
@@ -822,14 +982,25 @@ public class RPC
                         }
                     }
                     
+                    ulong lastCreatedBlock = 0;
+                    if (validator["lastCreatedBlock"] != null)
+                    {
+                        string lcbStr = validator["lastCreatedBlock"].ToString();
+                        if (!string.IsNullOrEmpty(lcbStr))
+                        {
+                            lastCreatedBlock = Convert.ToUInt64(lcbStr);
+                        }
+                    }
+                    
                     validators.Add(new Validator(
                         address: address,
                         ip: ip,
                         badActor: badActor,
                         votingPower: votingPower,
-                        shares: shares,
+                        totalShares: shares,
                         delegatorsCount: delegatorsCount,
                         status: status,
+                        lastCreatedBlock: lastCreatedBlock,
                         httpClient: _httpClient
                     ));
                 }
@@ -859,7 +1030,14 @@ public class RPC
             var response = await _httpClient.GetAsync(_rpcNodeUrl + "/standbyValidators");
             var responseString = await response.Content.ReadAsStringAsync();
 
-            JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            // Pre-process the JSON string to quote large numbers in totalShares
+            var regex = new Regex(@"""totalShares"":\s*(\d+)");
+            responseString = regex.Replace(responseString, match => {
+                var number = match.Groups[1].Value;
+                return $@"""totalShares"": ""{number}""";
+            });
+
+            JObject responseData = JObject.Parse(responseString);
             JArray validatorsArray = (JArray)responseData["validators"];
             List<Validator> validators = new List<Validator>();
 
@@ -867,12 +1045,10 @@ public class RPC
             {
                 try
                 {
-                    // Handle string values
                     string address = validator["address"]?.ToString() ?? "";
                     string ip = validator["ip"]?.ToString() ?? "";
                     string status = validator["status"]?.ToString() ?? "standby";
                     
-                    // Handle numeric values with safer conversions
                     bool badActor = false;
                     if (validator["badActor"] != null)
                     {
@@ -892,7 +1068,7 @@ public class RPC
                         string vpStr = validator["votingPower"].ToString();
                         if (!string.IsNullOrEmpty(vpStr))
                         {
-                            votingPower = Convert.ToUInt64(vpStr);
+                            ulong.TryParse(vpStr, out votingPower);
                         }
                     }
                     
@@ -902,7 +1078,7 @@ public class RPC
                         string sharesStr = validator["totalShares"].ToString();
                         if (!string.IsNullOrEmpty(sharesStr))
                         {
-                            shares = Convert.ToUInt64(sharesStr);
+                            ulong.TryParse(sharesStr, out shares);
                         }
                     }
                     
@@ -912,7 +1088,17 @@ public class RPC
                         string countStr = validator["delegatorsCount"].ToString();
                         if (!string.IsNullOrEmpty(countStr))
                         {
-                            delegatorsCount = Convert.ToUInt32(countStr);
+                            uint.TryParse(countStr, out delegatorsCount);
+                        }
+                    }
+                    
+                    ulong lastCreatedBlock = 0;
+                    if (validator["lastCreatedBlock"] != null)
+                    {
+                        string lcbStr = validator["lastCreatedBlock"].ToString();
+                        if (!string.IsNullOrEmpty(lcbStr))
+                        {
+                            ulong.TryParse(lcbStr, out lastCreatedBlock);
                         }
                     }
                     
@@ -921,19 +1107,18 @@ public class RPC
                         ip: ip,
                         badActor: badActor,
                         votingPower: votingPower,
-                        shares: shares,
+                        totalShares: shares,
                         delegatorsCount: delegatorsCount,
                         status: status,
+                        lastCreatedBlock: lastCreatedBlock,
                         httpClient: _httpClient
                     ));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error parsing standby validator: {ex.Message}");
-                    // Skip this validator if it can't be parsed
                 }
             }
-            
             return validators;
         }
         catch (Exception ex)
@@ -948,26 +1133,61 @@ public class RPC
     /// <returns>A list of <see cref="Validator"/> objects representing active validators.</returns>
     public async Task<List<Validator>> GetActiveValidators()
     {
-        
         var url = _rpcNodeUrl + "/activeValidators";
         var response = await Request(url);
-        var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        var validatorsString = responseData["validators"].ToString();
-        JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
+
+        // Apply regex to the raw response string to quote large numbers in totalShares
+        var regex = new Regex(@"(""validators""\s*:\s*\[.*?\])", RegexOptions.Singleline);
+        var match = regex.Match(response);
+        string validatorsString = "[]";
+        if (match.Success)
+        {
+            // Extract the validators array string
+            var arrayRegex = new Regex(@"""totalShares""\s*:\s*(\d+)");
+            validatorsString = match.Groups[1].Value;
+            validatorsString = arrayRegex.Replace(validatorsString, m => $"\"totalShares\": \"{m.Groups[1].Value}\"");
+            // Remove the 'validators:' key to get a pure array
+            int idx = validatorsString.IndexOf('[');
+            if (idx >= 0)
+                validatorsString = validatorsString.Substring(idx);
+        }
+        JArray validatorsArray = JArray.Parse(validatorsString);
         List<Validator> validators = new List<Validator>();
-            
         foreach(var token in validatorsArray){
-            string address = token["address"].Value<string>();
-            ulong votingPower = token["votingPower"]?.Value<ulong>() ?? 0;
+            string address = token["address"]?.ToString() ?? "";
+            string ip = token["ip"]?.ToString() ?? "";
+            string status = token["status"]?.ToString() ?? "active";
+            bool badActor = token["badActor"]?.Type == JTokenType.Boolean ? token["badActor"].Value<bool>() : false;
+            ulong votingPower = 0;
+            if (token["votingPower"] != null) ulong.TryParse(token["votingPower"].ToString(), out votingPower);
+            // Handle totalShares as string to avoid overflow
+            string totalSharesStr = token["totalShares"]?.ToString() ?? "0";
+            ulong totalShares = 0;
+            if (!string.IsNullOrEmpty(totalSharesStr))
+            {
+                if (totalSharesStr.Length > 20)
+                {
+                    totalShares = ulong.MaxValue;
+                }
+                else
+                {
+                    ulong.TryParse(totalSharesStr, out totalShares);
+                }
+            }
+            uint delegatorsCount = 0;
+            if (token["delegatorsCount"] != null) uint.TryParse(token["delegatorsCount"].ToString(), out delegatorsCount);
+            ulong lastCreatedBlock = 0;
+            if (token["lastCreatedBlock"] != null) ulong.TryParse(token["lastCreatedBlock"].ToString(), out lastCreatedBlock);
             var val = new Validator(
-                address : address,
-                ip : token["ip"]?.Value<string>() ?? "",
-                badActor : token["badActor"]?.Value<bool>() ?? false,
-                votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-                shares : token["totalShares"]?.Value<ulong>() ?? 0,
-                delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-                status : token["status"]?.Value<string>() ?? "active",
-                httpClient : _httpClient
+                address: address,
+                ip: ip,
+                badActor: badActor,
+                votingPower: votingPower,
+                totalShares: totalShares,
+                delegatorsCount: delegatorsCount,
+                status: status,
+                lastCreatedBlock: lastCreatedBlock,
+                httpClient: _httpClient
             );
             validators.Add(val);
         }
@@ -999,6 +1219,112 @@ public class RPC
 
         var data = JsonConvert.DeserializeObject<JObject>(response);
         FeePerByte = data["feePerByte"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
+    }
+
+    /// <summary>
+    /// Retrieves a transaction by its hash from the blockchain.
+    /// </summary>
+    /// <param name="transactionHash">The hash of the transaction to retrieve.</param>
+    /// <returns>A <see cref="Task{TransactionResponse}"/> representing the asynchronous operation, with a TransactionResponse object containing transaction details if found.</returns>
+    /// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
+    public async Task<TransactionResponse> GetTransactionByHash(string transactionHash)
+    {
+        var url = $"{_rpcNodeUrl}/transactionByHash?transactionHash={transactionHash}";
+        var response = await Request(url);
+        var responseObject = JsonConvert.DeserializeObject<JObject>(response);
+        var json = responseObject["transaction"].ToString();
+        var jsonTransaction = JsonConvert.DeserializeObject<JObject>(json);
+
+        // Handle data field as string first
+        byte[] data = Array.Empty<byte>();
+        var dataToken = jsonTransaction["data"];
+        if (dataToken != null && dataToken.Type != JTokenType.Null)
+        {
+            var dataStr = dataToken.ToString();
+            if (!string.IsNullOrEmpty(dataStr))
+            {
+                try
+                {
+                    // Remove "0x" prefix if present
+                    if (dataStr.StartsWith("0x"))
+                    {
+                        dataStr = dataStr.Substring(2);
+                    }
+                    // Convert hex string to bytes
+                    data = Enumerable.Range(0, dataStr.Length / 2)
+                        .Select(x => Convert.ToByte(dataStr.Substring(x * 2, 2), 16))
+                        .ToArray();
+                }
+                catch
+                {
+                    data = Array.Empty<byte>();
+                }
+            }
+        }
+
+        // Handle guardian data field
+        byte[] guardianData = Array.Empty<byte>();
+        var guardianDataToken = jsonTransaction["guardianData"];
+        if (guardianDataToken != null && guardianDataToken.Type != JTokenType.Null)
+        {
+            var guardianDataStr = guardianDataToken.ToString();
+            if (!string.IsNullOrEmpty(guardianDataStr))
+            {
+                try
+                {
+                    // Remove "0x" prefix if present
+                    if (guardianDataStr.StartsWith("0x"))
+                    {
+                        guardianDataStr = guardianDataStr.Substring(2);
+                    }
+                    // Convert hex string to bytes
+                    guardianData = Enumerable.Range(0, guardianDataStr.Length / 2)
+                        .Select(x => Convert.ToByte(guardianDataStr.Substring(x * 2, 2), 16))
+                        .ToArray();
+                }
+                catch
+                {
+                    guardianData = Array.Empty<byte>();
+                }
+            }
+        }
+
+        return new TransactionResponse(
+            identifier: jsonTransaction.Value<uint>("identifier"),
+            paidTotalFee: jsonTransaction.Value<ulong>("paidTotalFee"),
+            amount: jsonTransaction.Value<ulong>("amount"),
+            paidActionFee: jsonTransaction.Value<ulong>("paidActionFee"),
+            nonce: jsonTransaction.Value<uint>("nonce"),
+            transactionHash: jsonTransaction.Value<string>("transactionHash"),
+            timeStamp: jsonTransaction.Value<ulong>("timeStamp"),
+            feePerByte: jsonTransaction.Value<ulong>("feePerByte"),
+            size: jsonTransaction.Value<uint>("size"),
+            sender: jsonTransaction.Value<string>("sender"),
+            success: jsonTransaction.Value<bool>("success"),
+            blockNumber: jsonTransaction.Value<uint>("blockNumber"),
+            positionInTheBlock: jsonTransaction.Value<uint>("positionInTheBlock"),
+            vidaId: jsonTransaction.Value<ulong>("vidaId"),
+            receiver: jsonTransaction.Value<string>("receiver") ?? "",
+            data: data,
+            type: jsonTransaction.Value<string>("type") ?? "",
+            signature: jsonTransaction.Value<string>("signature") ?? "",
+            publicKey: jsonTransaction.Value<string>("publicKey") ?? "",
+            guardian: jsonTransaction.Value<string>("guardian") ?? "",
+            guardianSignature: jsonTransaction.Value<string>("guardianSignature") ?? "",
+            guardianPublicKey: jsonTransaction.Value<string>("guardianPublicKey") ?? "",
+            guardianNonce: jsonTransaction.Value<uint>("guardianNonce"),
+            guardianTimeStamp: jsonTransaction.Value<ulong>("guardianTimeStamp"),
+            guardianTransactionHash: jsonTransaction.Value<string>("guardianTransactionHash") ?? "",
+            guardianFeePerByte: jsonTransaction.Value<ulong>("guardianFeePerByte"),
+            guardianSize: jsonTransaction.Value<uint>("guardianSize"),
+            guardianSender: jsonTransaction.Value<string>("guardianSender") ?? "",
+            guardianSuccess: jsonTransaction.Value<bool>("guardianSuccess"),
+            guardianBlockNumber: jsonTransaction.Value<uint>("guardianBlockNumber"),
+            guardianPositionInTheBlock: jsonTransaction.Value<uint>("guardianPositionInTheBlock"),
+            guardianVidaId: jsonTransaction.Value<ulong>("guardianVidaId"),
+            guardianReceiver: jsonTransaction.Value<string>("guardianReceiver") ?? "",
+            guardianData: guardianData
+        );
     }
 
     /// <summary>
