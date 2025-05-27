@@ -19,6 +19,14 @@ public class Falcon
         // No need to add provider in C# version
     }
 
+    public static AsymmetricCipherKeyPair GenerateKeyPair512()
+    {
+        var keyPairGen = new FalconKeyPairGenerator();
+        var keyGenParams = new FalconKeyGenerationParameters(new SecureRandom(), Params512);
+        keyPairGen.Init(keyGenParams);
+        return keyPairGen.GenerateKeyPair();
+    }
+
     /// <summary>
     /// Generate a deterministic Falcon-512 key pair from a seed
     /// </summary>
@@ -39,20 +47,30 @@ public class Falcon
         return keyPairGen.GenerateKeyPair();
     }
 
-    public static AsymmetricCipherKeyPair GenerateKeyPair512()
-    {
-        var keyPairGen = new FalconKeyPairGenerator();
-        var keyGenParams = new FalconKeyGenerationParameters(new SecureRandom(), Params512);
-        keyPairGen.Init(keyGenParams);
-        return keyPairGen.GenerateKeyPair();
-    }
-
-    
-
     public static AsymmetricCipherKeyPair GenerateKeyPair1024()
     {
         var keyPairGen = new FalconKeyPairGenerator();
         var keyGenParams = new FalconKeyGenerationParameters(new SecureRandom(), Params1024);
+        keyPairGen.Init(keyGenParams);
+        return keyPairGen.GenerateKeyPair();
+    }
+
+    /// <summary>
+    /// Generate a deterministic Falcon-512 key pair from a seed
+    /// </summary>
+    /// <param name="seed">The seed bytes to derive the key pair from</param>
+    /// <returns>The generated key pair</returns>
+    public static AsymmetricCipherKeyPair GenerateKeyPair1024FromSeed(byte[] seed)
+    {
+        // Create a deterministic pseudo-random generator from the seed
+        var deterministicRandom = new DeterministicSecureRandom(seed);
+        byte[] bytes = new byte[48];
+        deterministicRandom.NextBytes(bytes);
+
+        deterministicRandom = new DeterministicSecureRandom(seed);
+
+        var keyPairGen = new FalconKeyPairGenerator();
+        var keyGenParams = new FalconKeyGenerationParameters(deterministicRandom, Params1024);
         keyPairGen.Init(keyGenParams);
         return keyPairGen.GenerateKeyPair();
     }
