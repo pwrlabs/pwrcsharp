@@ -2,23 +2,23 @@
 
 namespace PWR.Models;
 
-public class VmDataTxn : Transaction
+public class VidaDataTxn : Transaction
 {
     
-    [JsonProperty("vmId")]
-    public ulong VmId { get; }
+    [JsonProperty("vidaId")]
+    public ulong VidaId { get; }
 
     [JsonProperty("data")]
     public string Data { get; }
-    public VmDataTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string sender, string receiver, uint nonce, string hash,ulong value, ulong timestamp,ulong vmId,string data) 
+    public VidaDataTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string sender, string receiver, uint nonce, string hash,ulong value, ulong timestamp,ulong vidaId,string data) 
     : base(size, blockNumber, positionintheBlock, fee, type, sender, receiver, nonce, hash, value, timestamp)
     {
-        this.VmId = vmId;
+        this.VidaId = vidaId;
         this.Data = data;
     }
 
     public override string ToString()
         {
-            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, Sender={Sender}, Receiver={Receiver}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}, Data={Data}, VmId={VmId}";
+            return $"Transaction: Size={Size}, BlockNumber={BlockNumber}, PositionintheBlock={PositionintheBlock}, Fee={Fee}, Type={Type}, Sender={Sender}, Receiver={Receiver}, Nonce={Nonce}, Hash={Hash}, Value={Value}, TimeStamp={TimeStamp}, Data={Data}, VidaId={VidaId}";
         }
 }

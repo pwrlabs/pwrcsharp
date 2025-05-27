@@ -1,25 +1,22 @@
-﻿
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Ocsp;
 using PWR.Models;
+using PWR.Utils;
 
 namespace PWR;
 /// <summary>
 /// Provides methods to interact with the PWR blockchain via RPC calls.
 /// </summary>
-public class PwrApiSdk
+public class RPC
 {
     private readonly string _rpcNodeUrl;
     private readonly HttpClient _httpClient;
 
-    public PwrApiSdk(string rpcNodeUrl, HttpClient? httpClient = null)
+    public RPC(string rpcNodeUrl, HttpClient? httpClient = null)
     {
         _rpcNodeUrl = rpcNodeUrl ?? throw new InvalidOperationException("RPC Node URL cannot be null");
         _httpClient = httpClient ?? new HttpClient();
@@ -74,7 +71,7 @@ public class PwrApiSdk
     {
         if (ChainId == unchecked((byte)-1))
         {
-            string url = $"{_rpcNodeUrl}/chainId/";
+            string url = $"{_rpcNodeUrl}/chainId";
             string responseString = await Request(url);
 
             if (!string.IsNullOrEmpty(responseString))
@@ -112,7 +109,7 @@ public class PwrApiSdk
     public async Task<ulong> GetFeePerByte()
     {
         if(FeePerByte == 0){
-            var url = $"{_rpcNodeUrl}/feePerByte/";
+            var url = $"{_rpcNodeUrl}/feePerByte";
             string responseString = await Request(url);
             JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
 
@@ -126,7 +123,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The version of the blockchain.</returns>
     public async Task<short> GetBlockChainVersion(){
-        var url = $"{_rpcNodeUrl}/blockchainVersion/";
+        var url = $"{_rpcNodeUrl}/blockchainVersion";
         string response = await Request(url);
         
         JObject responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -139,7 +136,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The ECDSA verification fee.</returns>
     public async Task<ulong> GetEcdsaVerificationFee(){
-        var url = $"{_rpcNodeUrl}/ecdsaVerificationFee/";
+        var url = $"{_rpcNodeUrl}/ecdsaVerificationFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -151,7 +148,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The burn percentage.</returns>
     public async Task<ulong> GetBurnPercentage(){
-        var url = $"{_rpcNodeUrl}/burnPercentage/";
+        var url = $"{_rpcNodeUrl}/burnPercentage";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -163,7 +160,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The total voting power.</returns>
     public async Task<ulong> GetTotalVotingPower(){
-        var url = $"{_rpcNodeUrl}/totalVotingPower/";
+        var url = $"{_rpcNodeUrl}/totalVotingPower";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -175,7 +172,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The pwr rewards per year.</returns>
     public async Task<ulong> GetPwrRewardsPerYear(){
-        var url = $"{_rpcNodeUrl}/pwrRewardsPerYear/";
+        var url = $"{_rpcNodeUrl}/pwrRewardsPerYear";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -187,7 +184,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The withdrawal lock time.</returns>
     public async Task<ulong> GetWithdrawalLockTime(){
-        var url = $"{_rpcNodeUrl}/withdrawalLockTime/";
+        var url = $"{_rpcNodeUrl}/withdrawalLockTime";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -195,7 +192,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetMaxBlockSize(){
-        var url = $"{_rpcNodeUrl}/maxBlockSize/";
+        var url = $"{_rpcNodeUrl}/maxBlockSize";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -203,7 +200,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetMaxTransactionSize(){
-        var url = $"{_rpcNodeUrl}/maxTransactionSize/";
+        var url = $"{_rpcNodeUrl}/maxTransactionSize";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -211,7 +208,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetBlockTimestamp(){
-        var url = $"{_rpcNodeUrl}/blockTimestamp/";
+        var url = $"{_rpcNodeUrl}/blockTimestamp";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -219,7 +216,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetProposalFee(){
-        var url = $"{_rpcNodeUrl}/proposalFee/";
+        var url = $"{_rpcNodeUrl}/proposalFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -227,7 +224,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetProposalValidityTime(){
-        var url = $"{_rpcNodeUrl}/proposalValidityTime/";
+        var url = $"{_rpcNodeUrl}/proposalValidityTime";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -235,7 +232,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetValidatorCountLimit(){
-        var url = $"{_rpcNodeUrl}/validatorCountLimit/";
+        var url = $"{_rpcNodeUrl}/validatorCountLimit";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -243,7 +240,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetValidatorSlashingFee(){
-        var url = $"{_rpcNodeUrl}/validatorSlashingFee/";
+        var url = $"{_rpcNodeUrl}/validatorSlashingFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -251,7 +248,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetValidatorOperationalFee(){
-        var url = $"{_rpcNodeUrl}/validatorOperationalFee/";
+        var url = $"{_rpcNodeUrl}/validatorOperationalFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -259,7 +256,7 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetValidatorJoiningFee(){
-        var url = $"{_rpcNodeUrl}/validatorJoiningFee/";
+        var url = $"{_rpcNodeUrl}/validatorJoiningFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -267,31 +264,31 @@ public class PwrApiSdk
     }
 
     public async Task<ulong> GetMinimumDelegatingAmount(){
-        var url = $"{_rpcNodeUrl}/minimumDelegatingAmount/";
+        var url = $"{_rpcNodeUrl}/minimumDelegatingAmount";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
         return responseData["minimumDelegatingAmount"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
     }
 
-    public async Task<ulong> GetVmOwnerTransactionFeeShare(){
-        var url = $"{_rpcNodeUrl}/vmOwnerTransactionFeeShare/";
+    public async Task<ulong> GetVidaOwnerTransactionFeeShare(){
+        var url = $"{_rpcNodeUrl}/vidaOwnerTransactionFeeShare";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        return responseData["vmOwnerTransactionFeeShare"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
+        return responseData["vidaOwnerTransactionFeeShare"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
     }
 
-    public async Task<ulong> GetVmIdClaimingFee(){
-        var url = $"{_rpcNodeUrl}/vmIdClaimingFee/";
+    public async Task<ulong> GetVidaIdClaimingFee(){
+        var url = $"{_rpcNodeUrl}/vidaIdClaimingFee";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        return responseData["vmIdClaimingFee"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
+        return responseData["vidaIdClaimingFee"]?.Value<ulong>() ?? throw new Exception("Invalid response from RPC node");
     }
 
     public async Task<ulong> GetMaxGuardianTime(){
-        var url = $"{_rpcNodeUrl}/maxGuardianTime/";
+        var url = $"{_rpcNodeUrl}/maxGuardianTime";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -304,7 +301,7 @@ public class PwrApiSdk
     /// <returns>The total count of active validators.</returns>
     public async Task<uint> GetActiveValidatorsCount()
     {
-        var url = $"{_rpcNodeUrl}/activeValidatorsCount/";
+        var url = $"{_rpcNodeUrl}/activeValidatorsCount";
 
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -313,27 +310,27 @@ public class PwrApiSdk
         return validatorsCount;
     }
 
-    public string GetVmIdAddress(int vmId)
+    public string GetVidaIdAddress(int vidaId)
     {
         string hexAddress = "0";
-        if (vmId >= 0)
+        if (vidaId >= 0)
         {
             hexAddress = "1";
         }
-        if (vmId < 0)
+        if (vidaId < 0)
         {
-            vmId = -vmId;
+            vidaId = -vidaId;
         }
 
-        string vmIdString = vmId.ToString();
-        int padding = 39 - vmIdString.Length;
+        string vidaIdString = vidaId.ToString();
+        int padding = 39 - vidaIdString.Length;
 
         if (padding > 0)
         {
             hexAddress += new string('0', padding);
         }
 
-        hexAddress += vmIdString;
+        hexAddress += vidaIdString;
 
         return "0x" + hexAddress;
     }
@@ -344,18 +341,63 @@ public class PwrApiSdk
     /// </summary>
     /// <param name="startingBlock">The starting block number of the range.</param>
     /// <param name="endingBlock">The ending block number of the range.</param>
-    /// <param name="vmId">The ID of the virtual machine.</param>
-    /// <returns>A list of <see cref="VmDataTxn"/> representing the virtual machine data transactions.</returns>
+    /// <param name="vidaId">The ID of the virtual machine.</param>
+    /// <returns>A list of <see cref="VidaDataTxn"/> representing the virtual machine data transactions.</returns>
     /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or the response JSON does not contain 'transactions'.</exception>   
-    public async Task<List<VmDataTxn>> GetVmDataTransactions(ulong startingBlock, ulong endingBlock, ulong vmId){
-        var url = $"{_rpcNodeUrl}getVmTransactions/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}";
+    public async Task<List<VidaDataTxn>> GetVidaDataTransactions(ulong startingBlock, ulong endingBlock, ulong vidaId){
+        var url = $"{_rpcNodeUrl}/getVidaTransactions?startingBlock={startingBlock}&endingBlock={endingBlock}&vidaId={vidaId}";
         string responseString = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-        var vmDataTxnsJson = responseData["transactions"]?.ToString() ?? throw new Exception("The response JSON does not contain 'transactions'.");
-        var vmDataTxnList = JsonConvert.DeserializeObject<List<VmDataTxn>>(vmDataTxnsJson);
+        var vidaDataTxnsJson = responseData["transactions"]?.ToString() ?? throw new Exception("The response JSON does not contain 'transactions'.");
+        
+        // Parse the transactions array
+        var transactionsArray = JArray.Parse(vidaDataTxnsJson);
+        var vidaDataTxnList = new List<VidaDataTxn>();
 
-        return vmDataTxnList;
+        foreach (var transaction in transactionsArray)
+        {
+            JObject? obj = null;
+            if (transaction is JObject jobj)
+            {
+                obj = jobj;
+            }
+            else if (transaction.Type == JTokenType.String)
+            {
+                try
+                {
+                    obj = JObject.Parse(transaction.Value<string>() ?? "{}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Failed to parse string transaction as JObject: {transaction}, error: {ex.Message}");
+                    continue;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Warning: Skipping transaction of unexpected type: {transaction.GetType()} value: {transaction}");
+                continue;
+            }
+            var vidaDataTxn = new VidaDataTxn(
+                size: obj["size"]?.Value<uint>() ?? 0,
+                blockNumber: obj["blockNumber"]?.Value<ulong>() ?? 0,
+                positionintheBlock: obj["positionInBlock"]?.Value<uint>() ?? 0,
+                fee: obj["paidTotalFee"]?.Value<ulong>() ?? 0,
+                type: "VIDA Data",
+                sender: obj["sender"]?.Value<string>() ?? "",
+                receiver: "",
+                nonce: obj["nonce"]?.Value<uint>() ?? 0,
+                hash: obj["transactionHash"]?.Value<string>() ?? "",
+                value: obj["amount"]?.Value<ulong>() ?? 0,
+                timestamp: obj["timeStamp"]?.Value<ulong>() ?? 0,
+                vidaId: obj["vidaId"]?.Value<ulong>() ?? 0,
+                data: obj["data"]?.Value<string>() ?? ""
+            );
+            vidaDataTxnList.Add(vidaDataTxn);
+        }
+
+        return vidaDataTxnList;
     }
 
     /// <summary>
@@ -363,19 +405,26 @@ public class PwrApiSdk
     /// </summary>
     /// <param name="startingBlock">The starting block number of the range.</param>
     /// <param name="endingBlock">The ending block number of the range.</param>
-    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <param name="vidaId">The ID of the virtual machine.</param>
     /// <param name="prefix">The byte prefix filter.</param>
-    /// <returns>A list of <see cref="VmDataTxn"/> representing the virtual machine data transactions.</returns>
-    public async Task<List<VmDataTxn>> GetVmDataTransactionsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vmId, byte[] prefix){
-        var url = $"{_rpcNodeUrl}/getVmTransactionsSortByBytePrefix/?startingBlock={startingBlock}&endingBlock={endingBlock}&vmId={vmId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
+    /// <returns>A list of <see cref="VidaDataTxn"/> representing the virtual machine data transactions.</returns>
+    public async Task<List<VidaDataTxn>> GetVidaDataTransactionsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vidaId, byte[] prefix){
+        var url = $"{_rpcNodeUrl}/getVidaTransactionsSortByBytePrefix?startingBlock={startingBlock}&endingBlock={endingBlock}&vidaId={vidaId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
         var response = await _httpClient.GetAsync(url);
         
         var responseString = await response.Content.ReadAsStringAsync();
 
+        // Pre-process the JSON string to quote large numbers in totalShares
+        var regex = new Regex(@"""totalShares"":\s*(\d+)");
+        responseString = regex.Replace(responseString, match => {
+            var number = match.Groups[1].Value;
+            return $@"""totalShares"": ""{number}""";
+        });
+
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-        var vmDataTxnsJson = responseData["transactions"].ToString();
-        var vmDataTxnList = JsonConvert.DeserializeObject<List<VmDataTxn>>(vmDataTxnsJson);
-        return vmDataTxnList;
+        var vidaDataTxnsJson = responseData["transactions"].ToString();
+        var vidaDataTxnList = JsonConvert.DeserializeObject<List<VidaDataTxn>>(vidaDataTxnsJson);
+        return vidaDataTxnList;
     }
 
     /// <summary>
@@ -383,7 +432,7 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The active voting power.</returns>
     public  async Task<ulong> GetActiveVotingPower()  {
-        var url = $"{_rpcNodeUrl}/activeVotingPower/";
+        var url = $"{_rpcNodeUrl}/activeVotingPower";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -395,11 +444,11 @@ public class PwrApiSdk
     /// </summary>
     /// <returns>The total count of delegators.</returns>
     public async Task<uint> GetDelegatorsCount()  {
-        var url = $"{_rpcNodeUrl}/totalDelegatorsCount/";
+        var url = $"{_rpcNodeUrl}/totalDelegatorsCount";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
 
-        return responseData["totalDelegatorsCount"]?.Value<uint>() ?? 0;
+        return responseData["delegatorsCount"]?.Value<uint>() ?? 0;
     }
 
     /// <summary>
@@ -407,25 +456,93 @@ public class PwrApiSdk
     /// </summary>
     /// <param name="address">The address of the user.</param>
     /// <returns>A list of <see cref="Validator"/> representing the delegatees.</returns>
-    public  async Task<List<Validator>> GetDelegatees(string address)  {
+    public async Task<List<Validator>> GetDelegatees(string address)  {
         ValidateAddress(address);
-        var url = $"{_rpcNodeUrl}/delegateesOfUser/?userAddress={address}";
+        var url = $"{_rpcNodeUrl}/delegateesOfUser?userAddress={address}";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        var tk = JsonConvert.DeserializeObject<JArray>(responseData["delegatees"].ToString());
+        if (responseData["validators"] == null)
+            return new List<Validator>();
+        var tk = JsonConvert.DeserializeObject<JArray>(responseData["validators"].ToString());
         List<Validator> validators = new List<Validator>();
         foreach(var token in tk){
-        var validator = new Validator(
-            address : token["address"].Value<string>(),
-            ip : token["ip"]?.Value<string>() ?? "",
-            badActor : token["badActor"]?.Value<bool>() ?? false,
-            votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-            shares : token["totalShares"]?.Value<ulong>() ?? 0,
-            delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-            status : token["status"]?.Value<string>() ?? "active",
-            httpClient : _httpClient
-        );
-        validators.Add(validator);
+            // Safely parse values with proper type handling
+            string addressStr = token["address"]?.ToString() ?? "";
+            string ip = token["ip"]?.ToString() ?? "";
+            string status = token["status"]?.ToString() ?? "active";
+            
+            bool badActor = false;
+            if (token["badActor"] != null)
+            {
+                if (token["badActor"].Type == JTokenType.Boolean)
+                {
+                    badActor = token["badActor"].Value<bool>();
+                }
+                else
+                {
+                    bool.TryParse(token["badActor"].ToString(), out badActor);
+                }
+            }
+            
+            ulong votingPower = 0;
+            if (token["votingPower"] != null)
+            {
+                string vpStr = token["votingPower"].ToString();
+                if (!string.IsNullOrEmpty(vpStr))
+                {
+                    ulong.TryParse(vpStr, out votingPower);
+                }
+            }
+            
+            ulong totalShares = 0;
+            if (token["totalShares"] != null)
+            {
+                string sharesStr = token["totalShares"].ToString();
+                if (!string.IsNullOrEmpty(sharesStr))
+                {
+                    if (sharesStr.Length > 20) // Handle very large numbers
+                    {
+                        totalShares = ulong.MaxValue;
+                    }
+                    else
+                    {
+                        ulong.TryParse(sharesStr, out totalShares);
+                    }
+                }
+            }
+            
+            uint delegatorsCount = 0;
+            if (token["delegatorsCount"] != null)
+            {
+                string countStr = token["delegatorsCount"].ToString();
+                if (!string.IsNullOrEmpty(countStr))
+                {
+                    uint.TryParse(countStr, out delegatorsCount);
+                }
+            }
+            
+            ulong lastCreatedBlock = 0;
+            if (token["lastCreatedBlock"] != null)
+            {
+                string lcbStr = token["lastCreatedBlock"].ToString();
+                if (!string.IsNullOrEmpty(lcbStr))
+                {
+                    ulong.TryParse(lcbStr, out lastCreatedBlock);
+                }
+            }
+            
+            var validator = new Validator(
+                address: "0x" + addressStr,
+                ip: ip,
+                badActor: badActor,
+                votingPower: votingPower,
+                totalShares: totalShares,
+                delegatorsCount: delegatorsCount,
+                status: status,
+                lastCreatedBlock: lastCreatedBlock,
+                httpClient: _httpClient
+            );
+            validators.Add(validator);
         }
         return validators;
     }
@@ -435,22 +552,95 @@ public class PwrApiSdk
     /// </summary>
     /// <param name="validatorAddress">The address of the validator.</param>
     /// <returns>The <see cref="Validator"/> object representing the validator.</returns>
-    public  async Task<Validator> GetValidator(string validatorAddress)  {
+    public async Task<Validator> GetValidator(string validatorAddress)
+    {
         ValidateAddress(validatorAddress);
          
-        var url = $"{_rpcNodeUrl}/validator/?validatorAddress={validatorAddress}";
+        var url = $"{_rpcNodeUrl}/validator?validatorAddress={validatorAddress}";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
         var token = JsonConvert.DeserializeObject<JObject>(responseData["validator"].ToString());
+
+        // Safely parse values with proper type handling
+        ulong votingPower = 0;
+        if (token["votingPower"] != null)
+        {
+            string vpStr = token["votingPower"].ToString();
+            if (!string.IsNullOrEmpty(vpStr))
+            {
+                if (ulong.TryParse(vpStr, out ulong vp))
+                {
+                    votingPower = vp;
+                }
+            }
+        }
+
+        ulong totalShares = 0;
+        if (token["totalShares"] != null)
+        {
+            string sharesStr = token["totalShares"].ToString();
+            if (!string.IsNullOrEmpty(sharesStr))
+            {
+                if (ulong.TryParse(sharesStr, out ulong shares))
+                {
+                    totalShares = shares;
+                }
+            }
+        }
+
+        ulong lastCreatedBlock = 0;
+        if (token["lastCreatedBlock"] != null)
+        {
+            string lcbStr = token["lastCreatedBlock"].ToString();
+            if (!string.IsNullOrEmpty(lcbStr))
+            {
+                if (ulong.TryParse(lcbStr, out ulong lcb))
+                {
+                    lastCreatedBlock = lcb;
+                }
+            }
+        }
+
+        uint delegatorsCount = 0;
+        if (token["delegatorsCount"] != null)
+        {
+            string countStr = token["delegatorsCount"].ToString();
+            if (!string.IsNullOrEmpty(countStr))
+            {
+                if (uint.TryParse(countStr, out uint count))
+                {
+                    delegatorsCount = count;
+                }
+            }
+        }
+
+        bool badActor = false;
+        if (token["badActor"] != null)
+        {
+            if (token["badActor"].Type == JTokenType.Boolean)
+            {
+                badActor = token["badActor"].Value<bool>();
+            }
+            else
+            {
+                string badActorStr = token["badActor"].ToString();
+                if (!string.IsNullOrEmpty(badActorStr))
+                {
+                    bool.TryParse(badActorStr, out badActor);
+                }
+            }
+        }
+
         var validator = new Validator(
-                address : token["address"].Value<string>(),
-                ip : token["ip"]?.Value<string>() ?? "",
-                badActor : token["badActor"]?.Value<bool>() ?? false,
-                votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-                shares : token["totalShares"]?.Value<ulong>() ?? 0,
-                delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-                status : token["status"]?.Value<string>() ?? "active",
-                httpClient : _httpClient
+            address: token["address"]?.ToString() ?? "",
+            ip: token["ip"]?.ToString() ?? "",
+            badActor: badActor,
+            votingPower: votingPower,
+            totalShares: totalShares,
+            delegatorsCount: delegatorsCount,
+            status: token["status"]?.ToString() ?? "standby",
+            lastCreatedBlock: lastCreatedBlock,
+            httpClient: _httpClient
         );
         return validator;
     }
@@ -465,7 +655,7 @@ public class PwrApiSdk
         ValidateAddress(delegatorAddress);
         ValidateAddress(validatorAddress);
        
-        var url = $"{_rpcNodeUrl}validator/delegator/delegatedPWROfAddress/?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
+        var url = $"{_rpcNodeUrl}/validator/delegator/delegatedPWROfAddress?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
         var responseString = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
@@ -477,7 +667,7 @@ public class PwrApiSdk
         ValidateAddress(delegatorAddress);
         ValidateAddress(validatorAddress);
        
-        var url = $"{_rpcNodeUrl}validator/delegator/sharesOfAddress/?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
+        var url = $"{_rpcNodeUrl}/validator/delegator/sharesOfAddress?userAddress={delegatorAddress}&validatorAddress={validatorAddress}";
         var responseString = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
@@ -494,7 +684,7 @@ public class PwrApiSdk
     {
         ValidateAddress(validator);
         
-        var url = $"{_rpcNodeUrl}/validator/shareValue/?validatorAddress={validator}";
+        var url = $"{_rpcNodeUrl}/validator/shareValue?validatorAddress={validator}";
         var response = await Request(url);
         
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -517,7 +707,7 @@ public class PwrApiSdk
     {
         try
         {
-            var url = $"{_rpcNodeUrl}/broadcast/";
+            var url = $"{_rpcNodeUrl}/broadcast";
             var payload = new { txn = txn.ToHex() };
             var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, content);
@@ -525,7 +715,12 @@ public class PwrApiSdk
 
             var responseData = JsonConvert.DeserializeObject<ApiResponse>(responseString);
             
-            return new ApiResponse(response.IsSuccessStatusCode, responseData?.Message ?? "Success");
+            if (responseData != null && !string.IsNullOrEmpty(responseData.Message))
+            {
+                return new ApiResponse(response.IsSuccessStatusCode, responseData.Message);
+            }
+            
+            return new ApiResponse(response.IsSuccessStatusCode, "Success");
         }
         catch (Exception e)
         {
@@ -541,7 +736,7 @@ public class PwrApiSdk
     public async Task<uint> GetNonceOfAddress(string address)
     {
         ValidateAddress(address);
-        var url = $"{_rpcNodeUrl}/nonceOfUser/?userAddress={address}";
+        var url = $"{_rpcNodeUrl}/nonceOfUser?userAddress={address}";
         var response = await _httpClient.GetAsync(url);
         var responseString = await response.Content.ReadAsStringAsync();
 
@@ -557,7 +752,7 @@ public class PwrApiSdk
     public async Task<ulong> GetBalanceOfAddress(string address)
     {
         ValidateAddress(address);
-        var url = $"{_rpcNodeUrl}/balanceOf/?userAddress={address}";
+        var url = $"{_rpcNodeUrl}/balanceOf?userAddress={address}";
         var response = await _httpClient.GetAsync(url);
         var responseString = await response.Content.ReadAsStringAsync();
 
@@ -574,7 +769,7 @@ public class PwrApiSdk
     public async Task<string> GetGuardianOfAddress(string address)
     {
         ValidateAddress(address);
-        var url = $"{_rpcNodeUrl}/guardianOf/?userAddress={address}";
+        var url = $"{_rpcNodeUrl}/guardianOf?userAddress={address}";
         var response = await _httpClient.GetAsync(url);
         var responseString = await response.Content.ReadAsStringAsync();
 
@@ -591,7 +786,7 @@ public class PwrApiSdk
     /// <returns>The total count of blocks.</returns>
     public async Task<ulong> GetBlocksCount()
     {
-        var url = $"{_rpcNodeUrl}/blocksCount/";
+        var url = $"{_rpcNodeUrl}/blocksCount";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -605,7 +800,7 @@ public class PwrApiSdk
     /// <returns>The total count of blocks.</returns>
     public async Task<ulong> GetLatestBlockNumber()
     {
-        var url = $"{_rpcNodeUrl}/blockNumber/";
+        var url = $"{_rpcNodeUrl}/blockNumber";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -621,25 +816,30 @@ public class PwrApiSdk
     /// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
     public async Task<Block> GetBlockByNumber(uint blockNumber)
     {
-        var url = $"{_rpcNodeUrl}/block/?blockNumber={blockNumber}";
+        var url = $"{_rpcNodeUrl}/block?blockNumber={blockNumber}";
         var response = await Request(url);
         var responseObject = JsonConvert.DeserializeObject<JObject>(response);
         var json = responseObject["block"].ToString();
         var jsonBlock = JsonConvert.DeserializeObject<JObject>(json);
-        ulong timestamp = jsonBlock.Value<ulong>("timestamp");
 
         var blockInstance = new Block(
-            transactionCount: jsonBlock.Value<uint>("transactionCount"),
-            size: jsonBlock.Value<uint>("blockSize"),
-            number: jsonBlock.Value<uint>("blockNumber"),
-            reward: jsonBlock.Value<ulong>("blockReward"),
-            timestamp: timestamp,
-            hash: jsonBlock.Value<string>("blockHash"),
-            submitter: jsonBlock.Value<string>("blockSubmitter"),
-            success: jsonBlock.Value<bool>("success"),
+            processedWithoutCriticalErrors: jsonBlock.Value<bool>("processedWithoutCriticalErrors"),
+            timeStamp: jsonBlock.Value<ulong>("timeStamp"),
+            blockHash: jsonBlock.Value<string>("blockHash"),
+            previousBlockHash: jsonBlock.Value<string>("previousBlockHash"),
+            size: jsonBlock.Value<uint>("size"),
+            proposer: jsonBlock.Value<string>("proposer"),
+            blockNumber: jsonBlock.Value<ulong>("blockNumber"),
+            burnedFees: jsonBlock.Value<ulong>("burnedFees"),
+            rootHash: jsonBlock.Value<string>("rootHash"),
+            blockReward: jsonBlock.Value<ulong>("blockReward"),
             transactions: jsonBlock["transactions"].Select(t =>
-                DeserializeTransaction(t.Value<string>("type"), t, new Newtonsoft.Json.JsonSerializer())
-            ).ToList()
+                new BlockTransaction(
+                    identifier: t.Value<uint>("identifier"),
+                    transactionHash: t.Value<string>("transactionHash")
+                )
+            ).ToList(),
+            newSharesPerSpark: jsonBlock.Value<ulong>("newSharesPerSpark")
         );
         return blockInstance;
           
@@ -649,8 +849,8 @@ public class PwrApiSdk
     
         switch (type)
         {
-            case "VM Data":
-                return jsonObject.ToObject<VmDataTxn>(serializer);
+            case "VIDA Data":
+                return jsonObject.ToObject<VidaDataTxn>(serializer);
             case "Set Guardian":
                 return jsonObject.ToObject<SetGuardianTxn>(serializer);
             case "Remove Guardian":
@@ -659,9 +859,9 @@ public class PwrApiSdk
                 return jsonObject.ToObject<ClaimSpotTxn>(serializer);
             case "Validator Claim Spot":
                 return jsonObject.ToObject<ClaimSpotTxn>(serializer);
-            case "Payable VM Data":
-                return jsonObject.ToObject<PayableVmDataTxn>(serializer);
-            case "Claim VM ID":
+            case "Payable VIDA Data":
+                return jsonObject.ToObject<PayableVidaDataTxn>(serializer);
+            case "Claim VIDA ID":
                 return jsonObject.ToObject<ClaimVlmdTxn>(serializer);
             case "Conduit Approval":
                 return jsonObject.ToObject<ConduitApprovalTxn >(serializer);  
@@ -684,7 +884,7 @@ public class PwrApiSdk
     /// <returns>The total count of validators.</returns>
     public async Task<uint> GetValidatorsCount()
     {
-        var url = $"{_rpcNodeUrl}/totalValidatorsCount/";
+        var url = $"{_rpcNodeUrl}/totalValidatorsCount";
         var response = await Request(url);
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
         var validatorsCount = responseData["validatorsCount"]?.Value<uint>() ?? throw new Exception("Invalid response from RPC node");
@@ -698,7 +898,7 @@ public class PwrApiSdk
     /// <returns>The total count of standby validators.</returns>
     public async Task<uint> GetStandbyValidatorsCount()
     {
-        var url = $"{_rpcNodeUrl}/standbyValidatorsCount/";
+        var url = $"{_rpcNodeUrl}/standbyValidatorsCount";
         var response = await Request(url);
 
         var responseData = JsonConvert.DeserializeObject<JObject>(response);
@@ -715,8 +915,15 @@ public class PwrApiSdk
     {
         try
         {
-            var response = await _httpClient.GetAsync(_rpcNodeUrl + "/allValidators/");
+            var response = await _httpClient.GetAsync(_rpcNodeUrl + "/allValidators");
             var responseString = await response.Content.ReadAsStringAsync();
+
+            // Pre-process the JSON string to quote large numbers in totalShares
+            var regex = new Regex(@"""totalShares"":\s*(\d+)");
+            responseString = regex.Replace(responseString, match => {
+                var number = match.Groups[1].Value;
+                return $@"""totalShares"": ""{number}""";
+            });
 
             JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
             JArray validatorsArray = (JArray)responseData["validators"];
@@ -775,14 +982,25 @@ public class PwrApiSdk
                         }
                     }
                     
+                    ulong lastCreatedBlock = 0;
+                    if (validator["lastCreatedBlock"] != null)
+                    {
+                        string lcbStr = validator["lastCreatedBlock"].ToString();
+                        if (!string.IsNullOrEmpty(lcbStr))
+                        {
+                            lastCreatedBlock = Convert.ToUInt64(lcbStr);
+                        }
+                    }
+                    
                     validators.Add(new Validator(
                         address: address,
                         ip: ip,
                         badActor: badActor,
                         votingPower: votingPower,
-                        shares: shares,
+                        totalShares: shares,
                         delegatorsCount: delegatorsCount,
                         status: status,
+                        lastCreatedBlock: lastCreatedBlock,
                         httpClient: _httpClient
                     ));
                 }
@@ -809,10 +1027,17 @@ public class PwrApiSdk
     {
         try
         {
-            var response = await _httpClient.GetAsync(_rpcNodeUrl + "/standbyValidators/");
+            var response = await _httpClient.GetAsync(_rpcNodeUrl + "/standbyValidators");
             var responseString = await response.Content.ReadAsStringAsync();
 
-            JObject responseData = JsonConvert.DeserializeObject<JObject>(responseString);
+            // Pre-process the JSON string to quote large numbers in totalShares
+            var regex = new Regex(@"""totalShares"":\s*(\d+)");
+            responseString = regex.Replace(responseString, match => {
+                var number = match.Groups[1].Value;
+                return $@"""totalShares"": ""{number}""";
+            });
+
+            JObject responseData = JObject.Parse(responseString);
             JArray validatorsArray = (JArray)responseData["validators"];
             List<Validator> validators = new List<Validator>();
 
@@ -820,12 +1045,10 @@ public class PwrApiSdk
             {
                 try
                 {
-                    // Handle string values
                     string address = validator["address"]?.ToString() ?? "";
                     string ip = validator["ip"]?.ToString() ?? "";
                     string status = validator["status"]?.ToString() ?? "standby";
                     
-                    // Handle numeric values with safer conversions
                     bool badActor = false;
                     if (validator["badActor"] != null)
                     {
@@ -845,7 +1068,7 @@ public class PwrApiSdk
                         string vpStr = validator["votingPower"].ToString();
                         if (!string.IsNullOrEmpty(vpStr))
                         {
-                            votingPower = Convert.ToUInt64(vpStr);
+                            ulong.TryParse(vpStr, out votingPower);
                         }
                     }
                     
@@ -855,7 +1078,7 @@ public class PwrApiSdk
                         string sharesStr = validator["totalShares"].ToString();
                         if (!string.IsNullOrEmpty(sharesStr))
                         {
-                            shares = Convert.ToUInt64(sharesStr);
+                            ulong.TryParse(sharesStr, out shares);
                         }
                     }
                     
@@ -865,7 +1088,17 @@ public class PwrApiSdk
                         string countStr = validator["delegatorsCount"].ToString();
                         if (!string.IsNullOrEmpty(countStr))
                         {
-                            delegatorsCount = Convert.ToUInt32(countStr);
+                            uint.TryParse(countStr, out delegatorsCount);
+                        }
+                    }
+                    
+                    ulong lastCreatedBlock = 0;
+                    if (validator["lastCreatedBlock"] != null)
+                    {
+                        string lcbStr = validator["lastCreatedBlock"].ToString();
+                        if (!string.IsNullOrEmpty(lcbStr))
+                        {
+                            ulong.TryParse(lcbStr, out lastCreatedBlock);
                         }
                     }
                     
@@ -874,19 +1107,18 @@ public class PwrApiSdk
                         ip: ip,
                         badActor: badActor,
                         votingPower: votingPower,
-                        shares: shares,
+                        totalShares: shares,
                         delegatorsCount: delegatorsCount,
                         status: status,
+                        lastCreatedBlock: lastCreatedBlock,
                         httpClient: _httpClient
                     ));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error parsing standby validator: {ex.Message}");
-                    // Skip this validator if it can't be parsed
                 }
             }
-            
             return validators;
         }
         catch (Exception ex)
@@ -901,26 +1133,61 @@ public class PwrApiSdk
     /// <returns>A list of <see cref="Validator"/> objects representing active validators.</returns>
     public async Task<List<Validator>> GetActiveValidators()
     {
-        
-        var url = _rpcNodeUrl + "/activeValidators/";
+        var url = _rpcNodeUrl + "/activeValidators";
         var response = await Request(url);
-        var responseData = JsonConvert.DeserializeObject<JObject>(response);
-        var validatorsString = responseData["validators"].ToString();
-        JArray validatorsArray = JsonConvert.DeserializeObject<JArray>(validatorsString);
+
+        // Apply regex to the raw response string to quote large numbers in totalShares
+        var regex = new Regex(@"(""validators""\s*:\s*\[.*?\])", RegexOptions.Singleline);
+        var match = regex.Match(response);
+        string validatorsString = "[]";
+        if (match.Success)
+        {
+            // Extract the validators array string
+            var arrayRegex = new Regex(@"""totalShares""\s*:\s*(\d+)");
+            validatorsString = match.Groups[1].Value;
+            validatorsString = arrayRegex.Replace(validatorsString, m => $"\"totalShares\": \"{m.Groups[1].Value}\"");
+            // Remove the 'validators:' key to get a pure array
+            int idx = validatorsString.IndexOf('[');
+            if (idx >= 0)
+                validatorsString = validatorsString.Substring(idx);
+        }
+        JArray validatorsArray = JArray.Parse(validatorsString);
         List<Validator> validators = new List<Validator>();
-            
         foreach(var token in validatorsArray){
-            string address = token["address"].Value<string>();
-            ulong votingPower = token["votingPower"]?.Value<ulong>() ?? 0;
+            string address = token["address"]?.ToString() ?? "";
+            string ip = token["ip"]?.ToString() ?? "";
+            string status = token["status"]?.ToString() ?? "active";
+            bool badActor = token["badActor"]?.Type == JTokenType.Boolean ? token["badActor"].Value<bool>() : false;
+            ulong votingPower = 0;
+            if (token["votingPower"] != null) ulong.TryParse(token["votingPower"].ToString(), out votingPower);
+            // Handle totalShares as string to avoid overflow
+            string totalSharesStr = token["totalShares"]?.ToString() ?? "0";
+            ulong totalShares = 0;
+            if (!string.IsNullOrEmpty(totalSharesStr))
+            {
+                if (totalSharesStr.Length > 20)
+                {
+                    totalShares = ulong.MaxValue;
+                }
+                else
+                {
+                    ulong.TryParse(totalSharesStr, out totalShares);
+                }
+            }
+            uint delegatorsCount = 0;
+            if (token["delegatorsCount"] != null) uint.TryParse(token["delegatorsCount"].ToString(), out delegatorsCount);
+            ulong lastCreatedBlock = 0;
+            if (token["lastCreatedBlock"] != null) ulong.TryParse(token["lastCreatedBlock"].ToString(), out lastCreatedBlock);
             var val = new Validator(
-                address : address,
-                ip : token["ip"]?.Value<string>() ?? "",
-                badActor : token["badActor"]?.Value<bool>() ?? false,
-                votingPower : token["votingPower"]?.Value<ulong>() ?? 0,
-                shares : token["totalShares"]?.Value<ulong>() ?? 0,
-                delegatorsCount : token["delegatorsCount"]?.Value<uint>() ?? 0,
-                status : token["status"]?.Value<string>() ?? "active",
-                httpClient : _httpClient
+                address: address,
+                ip: ip,
+                badActor: badActor,
+                votingPower: votingPower,
+                totalShares: totalShares,
+                delegatorsCount: delegatorsCount,
+                status: status,
+                lastCreatedBlock: lastCreatedBlock,
+                httpClient: _httpClient
             );
             validators.Add(val);
         }
@@ -930,11 +1197,11 @@ public class PwrApiSdk
     /// <summary>
     /// Retrieves the owner address of the virtual machine with the specified ID.
     /// </summary>
-    /// <param name="vmId">The ID of the virtual machine.</param>
+    /// <param name="vidaId">The ID of the virtual machine.</param>
     /// <returns>The owner address of the virtual machine.</returns>
-    public async Task<string> GetOwnerOfVmIds(uint vmId)
+    public async Task<string> GetOwnerOfVidaIds(uint vidaId)
     {
-        var url = $"{_rpcNodeUrl}/ownerOfVmId/?vmId={vmId}";
+        var url = $"{_rpcNodeUrl}/ownerOfVidaId?vidaId={vidaId}";
         var response = await Request(url);
         
         var data = JsonConvert.DeserializeObject<JObject>(response);
@@ -947,7 +1214,7 @@ public class PwrApiSdk
     /// <returns>A <see cref="Task{ulong}"/> representing the asynchronous operation, with the new fee per byte value.</returns>
     public async Task UpdateFeePerByte()
     {
-        var url = $"{_rpcNodeUrl}/feePerByte/";
+        var url = $"{_rpcNodeUrl}/feePerByte";
         var response = await Request(url);
 
         var data = JsonConvert.DeserializeObject<JObject>(response);
@@ -955,88 +1222,143 @@ public class PwrApiSdk
     }
 
     /// <summary>
-    /// Checks if a transaction is valid for guardian approval by querying a remote RPC node.
+    /// Retrieves a transaction by its hash from the blockchain.
     /// </summary>
-    /// <param name="txn">The transaction data represented as a hex String.</param>
-    /// <returns>
-    /// A <see cref="Task<TxnForGuardianApproval>"/> representing the asynchronous operation. The task result is a <see cref="TxnForGuardianApproval"/> object 
-    /// containing information about whether the transaction is valid for guardian approval and, if applicable, the transaction details.
-    /// </returns>
-    public async Task<TxnForGuardianApproval> IsTransactionValidForGuardianApproval(string txn){
-        ValidateTxn(txn);
-        return await IsTransactionValidForGuardianApproval(txn.HexToByteArray());
-    }
+    /// <param name="transactionHash">The hash of the transaction to retrieve.</param>
+    /// <returns>A <see cref="Task{TransactionResponse}"/> representing the asynchronous operation, with a TransactionResponse object containing transaction details if found.</returns>
+    /// <exception cref="Exception">Thrown when an HTTP error occurs or the response from the RPC node is invalid.</exception>
+    public async Task<TransactionResponse> GetTransactionByHash(string transactionHash)
+    {
+        var url = $"{_rpcNodeUrl}/transactionByHash?transactionHash={transactionHash}";
+        var response = await Request(url);
+        var responseObject = JsonConvert.DeserializeObject<JObject>(response);
+        var json = responseObject["transaction"].ToString();
+        var jsonTransaction = JsonConvert.DeserializeObject<JObject>(json);
 
-    /// <summary>
-    /// Checks if a transaction is valid for guardian approval by querying a remote RPC node.
-    /// </summary>
-    /// <param name="txn">The transaction data represented as a byte array.</param>
-    /// <returns>
-    /// A <see cref="Task<TxnForGuardianApproval>"/> representing the asynchronous operation. The task result is a <see cref="TxnForGuardianApproval"/> object 
-    /// containing information about whether the transaction is valid for guardian approval and, if applicable, the transaction details.
-    /// </returns>
-    /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or response processing.</exception>
-    public async Task<TxnForGuardianApproval> IsTransactionValidForGuardianApproval(byte[] txn){
-        try{
-            var url = $"{_rpcNodeUrl}/isTransactionValidForGuardianApproval/";
-            var payload = new { transaction = txn.ToHex() };
-            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(url, content);
-            if(response.IsSuccessStatusCode){
-            var responseString = await response.Content.ReadAsStringAsync();
-            // Console.WriteLine(responseString);
-            if (string.IsNullOrWhiteSpace(responseString))
-                return new TxnForGuardianApproval(false, "The response from the RPC node was empty.", null, null);
-
-            var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
-            bool isValid = responseData["valid"]?.Value<bool>() ?? false;
-            Transaction transaction = JsonConvert.DeserializeObject<Transaction>( responseData["transaction"].ToString());
-            string guardianAddress = responseData["guardian"]?.Value<string>() ?? "";
-            return new TxnForGuardianApproval(true,null,guardianAddress,transaction);
-            }else{
-                  var responseString = await response.Content.ReadAsStringAsync();
-                
-                var errorMessage = JsonConvert.DeserializeObject<JObject>(responseString)["message"]?.ToString();
-                var error = $"Error : {Environment.NewLine} Status Code : {response.StatusCode} {Environment.NewLine} Message : {errorMessage}";
-                return new TxnForGuardianApproval(false,errorMessage ?? "Unknown error",null,null);       
+        // Handle data field as string first
+        byte[] data = Array.Empty<byte>();
+        var dataToken = jsonTransaction["data"];
+        if (dataToken != null && dataToken.Type != JTokenType.Null)
+        {
+            var dataStr = dataToken.ToString();
+            if (!string.IsNullOrEmpty(dataStr))
+            {
+                try
+                {
+                    // Remove "0x" prefix if present
+                    if (dataStr.StartsWith("0x"))
+                    {
+                        dataStr = dataStr.Substring(2);
+                    }
+                    // Convert hex string to bytes
+                    data = Enumerable.Range(0, dataStr.Length / 2)
+                        .Select(x => Convert.ToByte(dataStr.Substring(x * 2, 2), 16))
+                        .ToArray();
+                }
+                catch
+                {
+                    data = Array.Empty<byte>();
+                }
             }
-        }catch(Exception e){
-            return new TxnForGuardianApproval(false,e.Message,null,null);
         }
+
+        // Handle guardian data field
+        byte[] guardianData = Array.Empty<byte>();
+        var guardianDataToken = jsonTransaction["guardianData"];
+        if (guardianDataToken != null && guardianDataToken.Type != JTokenType.Null)
+        {
+            var guardianDataStr = guardianDataToken.ToString();
+            if (!string.IsNullOrEmpty(guardianDataStr))
+            {
+                try
+                {
+                    // Remove "0x" prefix if present
+                    if (guardianDataStr.StartsWith("0x"))
+                    {
+                        guardianDataStr = guardianDataStr.Substring(2);
+                    }
+                    // Convert hex string to bytes
+                    guardianData = Enumerable.Range(0, guardianDataStr.Length / 2)
+                        .Select(x => Convert.ToByte(guardianDataStr.Substring(x * 2, 2), 16))
+                        .ToArray();
+                }
+                catch
+                {
+                    guardianData = Array.Empty<byte>();
+                }
+            }
+        }
+
+        return new TransactionResponse(
+            identifier: jsonTransaction.Value<uint>("identifier"),
+            paidTotalFee: jsonTransaction.Value<ulong>("paidTotalFee"),
+            amount: jsonTransaction.Value<ulong>("amount"),
+            paidActionFee: jsonTransaction.Value<ulong>("paidActionFee"),
+            nonce: jsonTransaction.Value<uint>("nonce"),
+            transactionHash: jsonTransaction.Value<string>("transactionHash"),
+            timeStamp: jsonTransaction.Value<ulong>("timeStamp"),
+            feePerByte: jsonTransaction.Value<ulong>("feePerByte"),
+            size: jsonTransaction.Value<uint>("size"),
+            sender: jsonTransaction.Value<string>("sender"),
+            success: jsonTransaction.Value<bool>("success"),
+            blockNumber: jsonTransaction.Value<uint>("blockNumber"),
+            positionInTheBlock: jsonTransaction.Value<uint>("positionInTheBlock"),
+            vidaId: jsonTransaction.Value<ulong>("vidaId"),
+            receiver: jsonTransaction.Value<string>("receiver") ?? "",
+            data: data,
+            type: jsonTransaction.Value<string>("type") ?? "",
+            signature: jsonTransaction.Value<string>("signature") ?? "",
+            publicKey: jsonTransaction.Value<string>("publicKey") ?? "",
+            guardian: jsonTransaction.Value<string>("guardian") ?? "",
+            guardianSignature: jsonTransaction.Value<string>("guardianSignature") ?? "",
+            guardianPublicKey: jsonTransaction.Value<string>("guardianPublicKey") ?? "",
+            guardianNonce: jsonTransaction.Value<uint>("guardianNonce"),
+            guardianTimeStamp: jsonTransaction.Value<ulong>("guardianTimeStamp"),
+            guardianTransactionHash: jsonTransaction.Value<string>("guardianTransactionHash") ?? "",
+            guardianFeePerByte: jsonTransaction.Value<ulong>("guardianFeePerByte"),
+            guardianSize: jsonTransaction.Value<uint>("guardianSize"),
+            guardianSender: jsonTransaction.Value<string>("guardianSender") ?? "",
+            guardianSuccess: jsonTransaction.Value<bool>("guardianSuccess"),
+            guardianBlockNumber: jsonTransaction.Value<uint>("guardianBlockNumber"),
+            guardianPositionInTheBlock: jsonTransaction.Value<uint>("guardianPositionInTheBlock"),
+            guardianVidaId: jsonTransaction.Value<ulong>("guardianVidaId"),
+            guardianReceiver: jsonTransaction.Value<string>("guardianReceiver") ?? "",
+            guardianData: guardianData
+        );
     }
 
     /// <summary>
-    /// Subscribes to IVA transactions for a specific VM with custom polling interval
+    /// Subscribes to VIDA transactions for a specific VIDA with custom polling interval
     /// </summary>
-    /// <param name="vmId">The VM ID to subscribe to</param>
+    /// <param name="vidaId">The VIDA ID to subscribe to</param>
     /// <param name="startingBlock">The block number to start checking from</param>
     /// <param name="handler">The handler for processing transactions</param>
     /// <param name="pollInterval">Interval in milliseconds between polling</param>
     /// <returns>The subscription object that can be used to control the subscription</returns>
-    public IvaTransactionSubscription SubscribeToIvaTransactions(
-        ulong vmId, 
+    public VidaTransactionSubscription SubscribeToVidaTransactions(
+        ulong vidaId, 
         ulong startingBlock, 
-        IvaTransactionHandler handler, 
+        VidaTransactionHandler handler, 
         int pollInterval)
     {
-        var subscription = new IvaTransactionSubscription(this, vmId, startingBlock, handler, pollInterval);
+        var subscription = new VidaTransactionSubscription(this, vidaId, startingBlock, handler, pollInterval);
         subscription.Start();
         return subscription;
     }
 
     /// <summary>
-    /// Subscribes to IVA transactions for a specific VM with default polling interval (100ms)
+    /// Subscribes to VIDA transactions for a specific VIDA with default polling interval (100ms)
     /// </summary>
-    /// <param name="vmId">The VM ID to subscribe to</param>
+    /// <param name="vidaId">The VIDA ID to subscribe to</param>
     /// <param name="startingBlock">The block number to start checking from</param>
     /// <param name="handler">The handler for processing transactions</param>
     /// <returns>The subscription object that can be used to control the subscription</returns>
-    public IvaTransactionSubscription SubscribeToIvaTransactions(
-        ulong vmId,
+    public VidaTransactionSubscription SubscribeToVidaTransactions(
+        ulong vidaId,
         ulong startingBlock,
-        IvaTransactionHandler handler)
+        VidaTransactionHandler handler)
     {
-        return SubscribeToIvaTransactions(vmId, startingBlock, handler, 100);
+        return SubscribeToVidaTransactions(vidaId, startingBlock, handler, 100);
     }
 
     /// <summary>

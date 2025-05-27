@@ -2,55 +2,75 @@
 using Newtonsoft.Json.Linq;
 namespace PWR.Models;
 
-public class Block
-{
-    [JsonProperty("transactionCount")]
-    public uint TransactionCount { get; }
-    [JsonProperty("blockSize")]
-    public uint Size { get; }
-    [JsonProperty("blockNumber")]
-    public ulong Number { get; }
-    [JsonProperty("blockReward")]
-    public ulong Reward { get; }
-    [JsonProperty("timestamp")]
-    public ulong Timestamp { get; }
-    [JsonProperty("blockHash")]
-    public string Hash { get; }
-    [JsonProperty("blockSubmitter")]
-    public string Submitter { get; }
-    [JsonProperty("success")]
-    public bool Success { get; }
-    [JsonProperty("transactions")]    
-    [JsonConverter(typeof(TransactionConverter))]
-    public List<Transaction> Transactions { get; }
+public class BlockTransaction{
+    [JsonProperty("identifier")]
+    public uint Identifier { get; }
+    [JsonProperty("transactionHash")]
+    public string TransactionHash { get; }
 
-    public Block(uint transactionCount, uint size, uint number, ulong reward, ulong timestamp, string hash, string submitter, bool success, List<Transaction> transactions)
+    public BlockTransaction(uint identifier, string transactionHash)
     {
-        TransactionCount = transactionCount;
-        Size = size;
-        Number = number;
-        Reward = reward;
-        Timestamp = timestamp;
-        Hash = hash;
-        Submitter = submitter;
-        Success = success;
-        Transactions = transactions;
-        foreach(var txn in transactions){
-            txn.TimeStamp = timestamp;
-            txn.BlockNumber = number;
-        }
+        Identifier = identifier;
+        TransactionHash = transactionHash;
     }
 
     public override string ToString()
-        {
-            string txnInfo = "";
-            foreach(Transaction tx in Transactions){
-                txnInfo += tx.ToString();
-                txnInfo += Environment.NewLine;
-            }
-           
-            return $"Block: Number={Number}, Hash={Hash}, Size={Size}, Reward={Reward}, Timestamp={Timestamp}, Submitter={Submitter}, Success={Success}, TransactionCount={TransactionCount}{Environment.NewLine}Transactions:{Environment.NewLine}{txnInfo}";
+    {
+        return $"Transaction: Identifier={Identifier}, Hash={TransactionHash}";
+    }
+}
+
+public class Block
+{
+    [JsonProperty("processedWithoutCriticalErrors")]
+    public bool ProcessedWithoutCriticalErrors { get; }
+    [JsonProperty("timeStamp")]
+    public ulong TimeStamp { get; }
+    [JsonProperty("blockHash")]
+    public string BlockHash { get; }
+    [JsonProperty("previousBlockHash")]
+    public string PreviousBlockHash { get; }
+    [JsonProperty("size")]
+    public uint Size { get; }
+    [JsonProperty("proposer")]
+    public string Proposer { get; }
+    [JsonProperty("blockNumber")]
+    public ulong BlockNumber { get; }
+    [JsonProperty("burnedFees")]
+    public ulong BurnedFees { get; }
+    [JsonProperty("rootHash")]
+    public string RootHash { get; }
+    [JsonProperty("blockReward")]
+    public ulong BlockReward { get; }
+    [JsonProperty("transactions")]
+    public List<BlockTransaction> Transactions { get; }
+    [JsonProperty("newSharesPerSpark")]
+    public ulong NewSharesPerSpark { get; }
+
+    public Block(bool processedWithoutCriticalErrors, ulong timeStamp, string blockHash, string previousBlockHash, uint size, string proposer, ulong blockNumber, ulong burnedFees, string rootHash, ulong blockReward, List<BlockTransaction> transactions, ulong newSharesPerSpark)
+    {
+        ProcessedWithoutCriticalErrors = processedWithoutCriticalErrors;
+        TimeStamp = timeStamp;
+        BlockHash = blockHash;
+        PreviousBlockHash = previousBlockHash;
+        Size = size;
+        Proposer = proposer;
+        BlockNumber = blockNumber;
+        BurnedFees = burnedFees;
+        RootHash = rootHash;
+        BlockReward = blockReward;
+        Transactions = transactions;
+        NewSharesPerSpark = newSharesPerSpark;
+    }
+
+    public override string ToString()
+    {
+        string txnInfo = "";
+        foreach(BlockTransaction tx in Transactions){
+            txnInfo += tx.ToString();
+            txnInfo += Environment.NewLine;
         }
-
-
+       
+        return $"Block: Number={BlockNumber}, Hash={BlockHash}, PrevHash={PreviousBlockHash}, Size={Size}, Reward={BlockReward}, BurnedFees={BurnedFees}, TimeStamp={TimeStamp}, Proposer={Proposer}, Success={ProcessedWithoutCriticalErrors}, RootHash={RootHash}, NewSharesPerSpark={NewSharesPerSpark}, TransactionCount={Transactions.Count}{Environment.NewLine}Transactions:{Environment.NewLine}{txnInfo}";
+    }
 }

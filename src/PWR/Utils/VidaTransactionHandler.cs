@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using PWR.Models;
 
-namespace PWR
+namespace PWR.Utils
 {
     /// <summary>
-    /// Functional interface for handling IVA transactions
+    /// Functional interface for handling VIDA transactions
     /// </summary>
-    public delegate void IvaTransactionHandler(VmDataTxn transaction);
+    public delegate void VidaTransactionHandler(VidaDataTxn transaction);
 
     /// <summary>
-    /// Handles subscription to IVA transactions for a specific VM
+    /// Handles subscription to VIDA transactions for a specific VIDA
     /// </summary>
-    public class IvaTransactionSubscription
+    public class VidaTransactionSubscription
     {
-        private readonly PwrApiSdk _pwrSdk;
-        private readonly ulong _vmId;
+        private readonly RPC _pwrSdk;
+        private readonly ulong _vidaId;
         private readonly ulong _startingBlock;
         private ulong _latestCheckedBlock;
-        private readonly IvaTransactionHandler _handler;
+        private readonly VidaTransactionHandler _handler;
         private readonly int _pollInterval;
 
         // Thread control flags using atomics
@@ -29,17 +29,17 @@ namespace PWR
         private int _isRunning;
 
         /// <summary>
-        /// Creates a new IVA transaction subscription
+        /// Creates a new VIDA transaction subscription
         /// </summary>
         /// <param name="pwrSdk">The PWR SDK instance</param>
-        /// <param name="vmId">The VM ID to subscribe to</param>
+        /// <param name="vidaId">The VIDA ID to subscribe to</param>
         /// <param name="startingBlock">The block number to start checking from</param>
         /// <param name="handler">The handler for processing transactions</param>
         /// <param name="pollInterval">Interval in milliseconds between polling for new blocks</param>
-        public IvaTransactionSubscription(PwrApiSdk pwrSdk, ulong vmId, ulong startingBlock, IvaTransactionHandler handler, int pollInterval = 100)
+        public VidaTransactionSubscription(RPC pwrSdk, ulong vidaId, ulong startingBlock, VidaTransactionHandler handler, int pollInterval = 100)
         {
             _pwrSdk = pwrSdk ?? throw new ArgumentNullException(nameof(pwrSdk));
-            _vmId = vmId;
+            _vidaId = vidaId;
             _startingBlock = startingBlock;
             _latestCheckedBlock = startingBlock;
             _handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -53,7 +53,7 @@ namespace PWR
         {
             if (Interlocked.CompareExchange(ref _isRunning, 1, 0) != 0)
             {
-                Console.WriteLine("ERROR: IvaTransactionSubscription is already running");
+                Console.WriteLine("ERROR: VidaTransactionSubscription is already running");
                 return;
             }
 
@@ -83,8 +83,8 @@ namespace PWR
 
                         if (effectiveLatestBlock >= currentBlock)
                         {
-                            List<VmDataTxn> transactions = Task.Run(async () => 
-                                await _pwrSdk.GetVmDataTransactions(currentBlock, effectiveLatestBlock, _vmId)).Result;
+                            List<VidaDataTxn> transactions = Task.Run(async () => 
+                                await _pwrSdk.GetVidaDataTransactions(currentBlock, effectiveLatestBlock, _vidaId)).Result;
 
                             foreach (var transaction in transactions)
                             {
@@ -97,7 +97,7 @@ namespace PWR
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error in IVA transaction subscription: {ex.Message}");
+                        Console.WriteLine($"Error in VIDA transaction subscription: {ex.Message}");
                         Console.WriteLine(ex.StackTrace);
                         break;
                     }
@@ -109,7 +109,7 @@ namespace PWR
                 Interlocked.Exchange(ref _isRunning, 0);
             });
 
-            thread.Name = $"IvaTransactionSubscription:IVA-ID-{_vmId}";
+            thread.Name = $"VidaTransactionSubscription:VIDA-ID-{_vidaId}";
             thread.Start();
         }
 
@@ -178,17 +178,17 @@ namespace PWR
         }
 
         /// <summary>
-        /// Gets the VM ID that this subscription is for
+        /// Gets the VIDA ID that this subscription is for
         /// </summary>
         public ulong GetVidaId()
         {
-            return _vmId;
+            return _vidaId;
         }
 
         /// <summary>
         /// Gets the handler that processes transactions
         /// </summary>
-        public IvaTransactionHandler GetHandler()
+        public VidaTransactionHandler GetHandler()
         {
             return _handler;
         }
@@ -196,7 +196,7 @@ namespace PWR
         /// <summary>
         /// Gets the PWR SDK instance used by this subscription
         /// </summary>
-        public PwrApiSdk GetPwrApiSdk()
+        public RPC GetPwrApiSdk()
         {
             return _pwrSdk;
         }
