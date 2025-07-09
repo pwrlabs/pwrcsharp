@@ -342,9 +342,9 @@ public class RPC
     /// <param name="startingBlock">The starting block number of the range.</param>
     /// <param name="endingBlock">The ending block number of the range.</param>
     /// <param name="vidaId">The ID of the virtual machine.</param>
-    /// <returns>A list of <see cref="VidaDataTxn"/> representing the virtual machine data transactions.</returns>
+    /// <returns>A list of <see cref="VidaDataTransaction"/> representing the virtual machine data transactions.</returns>
     /// <exception cref="Exception">Thrown when an error occurs during the HTTP request or the response JSON does not contain 'transactions'.</exception>   
-    public async Task<List<VidaDataTxn>> GetVidaDataTransactions(ulong startingBlock, ulong endingBlock, ulong vidaId){
+    public async Task<List<VidaDataTransaction>> GetVidaDataTransactions(ulong startingBlock, ulong endingBlock, ulong vidaId){
         var url = $"{_rpcNodeUrl}/getVidaTransactions?startingBlock={startingBlock}&endingBlock={endingBlock}&vidaId={vidaId}";
         string responseString = await Request(url);
 
@@ -353,7 +353,7 @@ public class RPC
         
         // Parse the transactions array
         var transactionsArray = JArray.Parse(vidaDataTxnsJson);
-        var vidaDataTxnList = new List<VidaDataTxn>();
+        var vidaDataTxnList = new List<VidaDataTransaction>();
 
         foreach (var transaction in transactionsArray)
         {
@@ -379,7 +379,7 @@ public class RPC
                 Console.WriteLine($"Warning: Skipping transaction of unexpected type: {transaction.GetType()} value: {transaction}");
                 continue;
             }
-            var vidaDataTxn = new VidaDataTxn(
+            var vidaDataTxn = new VidaDataTransaction(
                 size: obj["size"]?.Value<uint>() ?? 0,
                 blockNumber: obj["blockNumber"]?.Value<ulong>() ?? 0,
                 positionintheBlock: obj["positionInBlock"]?.Value<uint>() ?? 0,
@@ -407,8 +407,8 @@ public class RPC
     /// <param name="endingBlock">The ending block number of the range.</param>
     /// <param name="vidaId">The ID of the virtual machine.</param>
     /// <param name="prefix">The byte prefix filter.</param>
-    /// <returns>A list of <see cref="VidaDataTxn"/> representing the virtual machine data transactions.</returns>
-    public async Task<List<VidaDataTxn>> GetVidaDataTransactionsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vidaId, byte[] prefix){
+    /// <returns>A list of <see cref="VidaDataTransaction"/> representing the virtual machine data transactions.</returns>
+    public async Task<List<VidaDataTransaction>> GetVidaDataTransactionsFilterByPerBytePrefix(ulong startingBlock, ulong endingBlock, ulong vidaId, byte[] prefix){
         var url = $"{_rpcNodeUrl}/getVidaTransactionsSortByBytePrefix?startingBlock={startingBlock}&endingBlock={endingBlock}&vidaId={vidaId}&bytePrefix={BitConverter.ToString(prefix).Replace("-", "").ToLower()}";
         var response = await _httpClient.GetAsync(url);
         
@@ -423,7 +423,7 @@ public class RPC
 
         var responseData = JsonConvert.DeserializeObject<JObject>(responseString);
         var vidaDataTxnsJson = responseData["transactions"].ToString();
-        var vidaDataTxnList = JsonConvert.DeserializeObject<List<VidaDataTxn>>(vidaDataTxnsJson);
+        var vidaDataTxnList = JsonConvert.DeserializeObject<List<VidaDataTransaction>>(vidaDataTxnsJson);
         return vidaDataTxnList;
     }
 
@@ -850,7 +850,7 @@ public class RPC
         switch (type)
         {
             case "VIDA Data":
-                return jsonObject.ToObject<VidaDataTxn>(serializer);
+                return jsonObject.ToObject<VidaDataTransaction>(serializer);
             case "Set Guardian":
                 return jsonObject.ToObject<SetGuardianTxn>(serializer);
             case "Remove Guardian":

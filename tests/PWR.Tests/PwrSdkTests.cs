@@ -21,7 +21,7 @@ public class PwrSdkTests
         ulong endingBlock = 85420;
         ulong vidaId = 123;
 
-        List<VidaDataTxn> vidaDataTxns = await sdk.GetVidaDataTransactions(startingBlock, endingBlock, vidaId);
+        List<VidaDataTransaction> vidaDataTxns = await sdk.GetVidaDataTransactions(startingBlock, endingBlock, vidaId);
         Assert.NotEmpty(vidaDataTxns);
         Assert.True(vidaDataTxns.Any());
         Assert.Equal(vidaId, vidaDataTxns[0].VidaId);

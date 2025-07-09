@@ -9,7 +9,7 @@ namespace PWR.Utils
     /// <summary>
     /// Functional interface for handling VIDA transactions
     /// </summary>
-    public delegate void VidaTransactionHandler(VidaDataTxn transaction);
+    public delegate void VidaTransactionHandler(VidaDataTransaction transaction);
 
     /// <summary>
     /// Handles subscription to VIDA transactions for a specific VIDA
@@ -83,7 +83,7 @@ namespace PWR.Utils
 
                         if (effectiveLatestBlock >= currentBlock)
                         {
-                            List<VidaDataTxn> transactions = Task.Run(async () => 
+                            List<VidaDataTransaction> transactions = Task.Run(async () => 
                                 await _pwrSdk.GetVidaDataTransactions(currentBlock, effectiveLatestBlock, _vidaId)).Result;
 
                             foreach (var transaction in transactions)

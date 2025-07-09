@@ -22,7 +22,7 @@ public class TransactionConverter : JsonConverter
             switch (type)
             {
                 case "VIDA Data":
-                    return jsonObject.ToObject<VidaDataTxn>(serializer);
+                    return jsonObject.ToObject<VidaDataTransaction>(serializer);
                 case "Set Guardian":
                     return jsonObject.ToObject<SetGuardianTxn>(serializer);
                 case "Remove Guardian":
