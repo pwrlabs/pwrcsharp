@@ -2,7 +2,7 @@
 
 namespace PWR.Models;
 
-public class VidaDataTxn : Transaction
+public class VidaDataTransaction : Transaction
 {
     
     [JsonProperty("vidaId")]
@@ -10,7 +10,7 @@ public class VidaDataTxn : Transaction
 
     [JsonProperty("data")]
     public string Data { get; }
-    public VidaDataTxn(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string sender, string receiver, uint nonce, string hash,ulong value, ulong timestamp,ulong vidaId,string data) 
+    public VidaDataTransaction(uint size, ulong blockNumber, uint positionintheBlock, ulong fee, string type, string sender, string receiver, uint nonce, string hash,ulong value, ulong timestamp,ulong vidaId,string data) 
     : base(size, blockNumber, positionintheBlock, fee, type, sender, receiver, nonce, hash, value, timestamp)
     {
         this.VidaId = vidaId;
