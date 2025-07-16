@@ -1338,27 +1338,13 @@ public class RPC
     public VidaTransactionSubscription SubscribeToVidaTransactions(
         ulong vidaId, 
         ulong startingBlock, 
-        VidaTransactionHandler handler, 
-        int pollInterval)
+        VidaTransactionHandler handler,
+        BlockSaver? blockSaver = null,
+        int pollInterval = 100)
     {
-        var subscription = new VidaTransactionSubscription(this, vidaId, startingBlock, handler, pollInterval);
+        var subscription = new VidaTransactionSubscription(this, vidaId, startingBlock, handler, pollInterval, blockSaver);
         subscription.Start();
         return subscription;
-    }
-
-    /// <summary>
-    /// Subscribes to VIDA transactions for a specific VIDA with default polling interval (100ms)
-    /// </summary>
-    /// <param name="vidaId">The VIDA ID to subscribe to</param>
-    /// <param name="startingBlock">The block number to start checking from</param>
-    /// <param name="handler">The handler for processing transactions</param>
-    /// <returns>The subscription object that can be used to control the subscription</returns>
-    public VidaTransactionSubscription SubscribeToVidaTransactions(
-        ulong vidaId,
-        ulong startingBlock,
-        VidaTransactionHandler handler)
-    {
-        return SubscribeToVidaTransactions(vidaId, startingBlock, handler, 100);
     }
 
     /// <summary>
