@@ -12,6 +12,54 @@ namespace PWR.Utils
     public delegate void VidaTransactionHandler(VidaDataTransaction transaction);
 
     /// <summary>
+    /// Delegate for saving block numbers to external storage (supports both sync and async)
+    /// </summary>
+    /// <example>
+    /// // Using with synchronous function:
+    /// var subscription = new VidaTransactionSubscription(rpc, vidaId, startBlock, handler, 100, 
+    ///     BlockSaverHelper.FromSync(blockNumber => File.WriteAllText("block.txt", blockNumber.ToString())));
+    /// 
+    /// // Using with asynchronous function:
+    /// var subscription = new VidaTransactionSubscription(rpc, vidaId, startBlock, handler, 100,
+    ///     BlockSaverHelper.FromAsync(async blockNumber => await SaveToDbAsync(blockNumber)));
+    /// 
+    /// // Direct async lambda:
+    /// var subscription = new VidaTransactionSubscription(rpc, vidaId, startBlock, handler, 100,
+    ///     async blockNumber => { await SaveToDbAsync(blockNumber); });
+    /// </example>
+    public delegate Task BlockSaver(ulong blockNumber);
+
+    /// <summary>
+    /// Helper class for creating BlockSaver delegates from both sync and async functions
+    /// </summary>
+    public static class BlockSaverHelper
+    {
+        /// <summary>
+        /// Creates a BlockSaver from a synchronous function
+        /// </summary>
+        /// <param name="syncAction">The synchronous action to wrap</param>
+        /// <returns>A BlockSaver delegate</returns>
+        public static BlockSaver FromSync(Action<ulong> syncAction)
+        {
+            return blockNumber =>
+            {
+                syncAction(blockNumber);
+                return Task.CompletedTask;
+            };
+        }
+
+        /// <summary>
+        /// Creates a BlockSaver from an asynchronous function
+        /// </summary>
+        /// <param name="asyncFunc">The asynchronous function to wrap</param>
+        /// <returns>A BlockSaver delegate</returns>
+        public static BlockSaver FromAsync(Func<ulong, Task> asyncFunc)
+        {
+            return blockNumber => asyncFunc(blockNumber);
+        }
+    }
+
+    /// <summary>
     /// Handles subscription to VIDA transactions for a specific VIDA
     /// </summary>
     public class VidaTransactionSubscription
@@ -19,24 +67,29 @@ namespace PWR.Utils
         private readonly RPC _pwrSdk;
         private readonly ulong _vidaId;
         private readonly ulong _startingBlock;
-        private ulong _latestCheckedBlock;
         private readonly VidaTransactionHandler _handler;
         private readonly int _pollInterval;
+        private readonly BlockSaver? _blockSaver;
 
-        // Thread control flags using atomics
-        private int _isPaused;
-        private int _isStopped;
-        private int _isRunning;
+        // Atomic state management using volatile booleans and proper locking
+        private volatile bool _wantsToPause;
+        private volatile bool _stop;
+        private volatile bool _paused;
+        private volatile bool _running;
+        private ulong _latestCheckedBlock;
+
+        private readonly object _lockObject = new object();
 
         /// <summary>
-        /// Creates a new VIDA transaction subscription
+        /// Creates a new VIDA transaction subscription with block persistence support
         /// </summary>
         /// <param name="pwrSdk">The PWR SDK instance</param>
         /// <param name="vidaId">The VIDA ID to subscribe to</param>
         /// <param name="startingBlock">The block number to start checking from</param>
         /// <param name="handler">The handler for processing transactions</param>
         /// <param name="pollInterval">Interval in milliseconds between polling for new blocks</param>
-        public VidaTransactionSubscription(RPC pwrSdk, ulong vidaId, ulong startingBlock, VidaTransactionHandler handler, int pollInterval = 100)
+        /// <param name="blockSaver">Optional callback for saving latest block number to external storage</param>
+        public VidaTransactionSubscription(RPC pwrSdk, ulong vidaId, ulong startingBlock, VidaTransactionHandler handler, int pollInterval = 100, BlockSaver? blockSaver = null)
         {
             _pwrSdk = pwrSdk ?? throw new ArgumentNullException(nameof(pwrSdk));
             _vidaId = vidaId;
@@ -44,32 +97,65 @@ namespace PWR.Utils
             _latestCheckedBlock = startingBlock;
             _handler = handler ?? throw new ArgumentNullException(nameof(handler));
             _pollInterval = pollInterval;
+            _blockSaver = blockSaver;
+
+            // Initialize state
+            _wantsToPause = false;
+            _stop = false;
+            _paused = false;
+            _running = false;
+
+            // Add shutdown hook equivalent for C#
+            Console.CancelKeyPress += (sender, e) => {
+                Console.WriteLine($"Shutting down VidaTransactionSubscription for VIDA-ID: {_vidaId}");
+                Pause();
+                Console.WriteLine($"VidaTransactionSubscription for VIDA-ID: {_vidaId} has been stopped.");
+            };
+
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) => {
+                Console.WriteLine($"Process exiting - shutting down VidaTransactionSubscription for VIDA-ID: {_vidaId}");
+                Pause();
+            };
         }
 
         /// <summary>
-        /// Starts the subscription process
+        /// Starts the subscription process with synchronized access
         /// </summary>
         public void Start()
         {
-            if (Interlocked.CompareExchange(ref _isRunning, 1, 0) != 0)
+            lock (_lockObject)
             {
-                Console.WriteLine("ERROR: VidaTransactionSubscription is already running");
-                return;
+                if (_running)
+                {
+                    Console.WriteLine("ERROR: VidaTransactionSubscription is already running");
+                    return;
+                }
+
+                _running = true;
+                _wantsToPause = false;
+                _stop = false;
+                _paused = false;
             }
 
-            Interlocked.Exchange(ref _isPaused, 0);
-            Interlocked.Exchange(ref _isStopped, 0);
-
-            ulong currentBlock = _startingBlock;
+            _latestCheckedBlock = _startingBlock - 1;
 
             Thread thread = new Thread(() =>
             {
-                while (!IsStopped())
+                while (!_stop)
                 {
-                    if (IsPaused())
+                    if (_wantsToPause)
                     {
-                        Thread.Sleep(_pollInterval);
+                        if (!_paused)
+                        {
+                            _paused = true;
+                        }
+                        Thread.Sleep(10);
                         continue;
+                    }
+
+                    if (_paused)
+                    {
+                        _paused = false;
                     }
 
                     try
@@ -77,36 +163,82 @@ namespace PWR.Utils
                         ulong latestBlock = Task.Run(async () => 
                             await _pwrSdk.GetLatestBlockNumber()).Result;
 
-                        ulong effectiveLatestBlock = (latestBlock > currentBlock + 1000) 
-                                ? currentBlock + 1000 
-                                : latestBlock;
-
-                        if (effectiveLatestBlock >= currentBlock)
+                        if (latestBlock == _latestCheckedBlock)
                         {
-                            List<VidaDataTransaction> transactions = Task.Run(async () => 
-                                await _pwrSdk.GetVidaDataTransactions(currentBlock, effectiveLatestBlock, _vidaId)).Result;
+                            Thread.Sleep(_pollInterval);
+                            continue;
+                        }
 
-                            foreach (var transaction in transactions)
+                        ulong maxBlockToCheck = Math.Min(latestBlock, _latestCheckedBlock + 1000);
+
+                        List<VidaDataTransaction> transactions = Task.Run(async () => 
+                            await _pwrSdk.GetVidaDataTransactions(_latestCheckedBlock + 1, maxBlockToCheck, _vidaId)).Result;
+
+                        foreach (var transaction in transactions)
+                        {
+                            try
                             {
                                 _handler(transaction);
                             }
-
-                            _latestCheckedBlock = effectiveLatestBlock;
-                            currentBlock = effectiveLatestBlock + 1;
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Failed to process VIDA transaction: {transaction.Hash} - {ex.Message}");
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
+
+                        _latestCheckedBlock = maxBlockToCheck;
+
+                        // Save latest checked block if block saver is provided
+                        if (_blockSaver != null)
+                        {
+                            try
+                            {
+                                var saveTask = _blockSaver(_latestCheckedBlock);
+                                if (!saveTask.IsCompleted)
+                                {
+                                    // Don't block the main thread for long-running async operations
+                                    _ = Task.Run(async () => 
+                                    {
+                                        try
+                                        {
+                                            await saveTask;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine($"Async block save failed for block {_latestCheckedBlock}: {ex.Message}");
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    // Wait for already completed tasks (likely sync operations)
+                                    saveTask.Wait();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Failed to save latest checked block: {_latestCheckedBlock} - {ex.Message}");
+                                Console.WriteLine(ex.StackTrace);
+                            }
+                        }
+                    }
+                    catch (System.IO.IOException ex)
+                    {
+                        Console.WriteLine($"Failed to fetch VIDA transactions: {ex.Message}");
+                        Console.WriteLine(ex.StackTrace);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error in VIDA transaction subscription: {ex.Message}");
+                        Console.WriteLine($"Unexpected error in VidaTransactionSubscription: {ex.Message}");
                         Console.WriteLine(ex.StackTrace);
-                        break;
                     }
 
                     // Sleep between iterations
                     Thread.Sleep(_pollInterval);
                 }
 
-                Interlocked.Exchange(ref _isRunning, 0);
+                _running = false;
             });
 
             thread.Name = $"VidaTransactionSubscription:VIDA-ID-{_vidaId}";
@@ -114,11 +246,26 @@ namespace PWR.Utils
         }
 
         /// <summary>
-        /// Pauses the subscription process
+        /// Sets the latest checked block number manually
+        /// </summary>
+        /// <param name="blockNumber">The block number to set as latest checked</param>
+        public void SetLatestCheckedBlock(ulong blockNumber)
+        {
+            _latestCheckedBlock = blockNumber;
+        }
+
+        /// <summary>
+        /// Pauses the subscription process and waits for confirmation
         /// </summary>
         public void Pause()
         {
-            Interlocked.Exchange(ref _isPaused, 1);
+            _wantsToPause = true;
+
+            // Wait until the thread is actually paused
+            while (!_paused && _running)
+            {
+                Thread.Sleep(10);
+            }
         }
 
         /// <summary>
@@ -126,7 +273,7 @@ namespace PWR.Utils
         /// </summary>
         public void Resume()
         {
-            Interlocked.Exchange(ref _isPaused, 0);
+            _wantsToPause = false;
         }
 
         /// <summary>
@@ -134,7 +281,8 @@ namespace PWR.Utils
         /// </summary>
         public void Stop()
         {
-            Interlocked.Exchange(ref _isStopped, 1);
+            Pause();
+            _stop = true;
         }
 
         /// <summary>
@@ -142,7 +290,7 @@ namespace PWR.Utils
         /// </summary>
         public bool IsRunning()
         {
-            return Interlocked.CompareExchange(ref _isRunning, 0, 0) == 1;
+            return _running;
         }
 
         /// <summary>
@@ -150,7 +298,7 @@ namespace PWR.Utils
         /// </summary>
         public bool IsPaused()
         {
-            return Interlocked.CompareExchange(ref _isPaused, 0, 0) == 1;
+            return _wantsToPause;
         }
 
         /// <summary>
@@ -158,7 +306,7 @@ namespace PWR.Utils
         /// </summary>
         public bool IsStopped()
         {
-            return Interlocked.CompareExchange(ref _isStopped, 0, 0) == 1;
+            return _stop;
         }
 
         /// <summary>
@@ -196,7 +344,7 @@ namespace PWR.Utils
         /// <summary>
         /// Gets the PWR SDK instance used by this subscription
         /// </summary>
-        public RPC GetPwrApiSdk()
+        public RPC GetPwrj()
         {
             return _pwrSdk;
         }
