@@ -4,6 +4,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Web;
+using System.Security.Cryptography;
+using System.IO;
+using PWR.Utils;
 
 namespace PWR.Utils.PowerKv;
 
@@ -67,7 +70,7 @@ public class PowerKv : IDisposable
 
         _projectId = projectId;
         _secret = secret;
-        _serverUrl = "https://pwrnosqlvida.pwrlabs.io/";
+        _serverUrl = "https://powerkvbe.pwrlabs.io";
 
         _httpClient = new HttpClient
         {
@@ -114,6 +117,64 @@ public class PowerKv : IDisposable
         };
     }
 
+    private static byte[] Hash256(byte[] input)
+    {
+        // PWRHash - Keccak256 hash function
+        // Using SHA256 as a fallback since SHA3 is not available in all .NET versions
+        using var sha256 = SHA256.Create();
+        return sha256.ComputeHash(input);
+    }
+
+    private static byte[] PackData(byte[] key, byte[] data)
+    {
+        // Binary data packing (ByteBuffer equivalent)
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        
+        // Write key length (4 bytes, big-endian) + key bytes
+        var keyLengthBytes = BitConverter.GetBytes((uint)key.Length);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(keyLengthBytes);
+        writer.Write(keyLengthBytes);
+        writer.Write(key);
+        
+        // Write data length (4 bytes, big-endian) + data bytes
+        var dataLengthBytes = BitConverter.GetBytes((uint)data.Length);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(dataLengthBytes);
+        writer.Write(dataLengthBytes);
+        writer.Write(data);
+        
+        return stream.ToArray();
+    }
+
+    private static (byte[] key, byte[] data) UnpackData(byte[] packedBuffer)
+    {
+        // Binary data unpacking
+        using var stream = new MemoryStream(packedBuffer);
+        using var reader = new BinaryReader(stream);
+        
+        // Read key length (4 bytes, big-endian)
+        var keyLengthBytes = reader.ReadBytes(4);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(keyLengthBytes);
+        var keyLength = BitConverter.ToUInt32(keyLengthBytes, 0);
+        
+        // Read key bytes
+        var key = reader.ReadBytes((int)keyLength);
+        
+        // Read data length (4 bytes, big-endian)
+        var dataLengthBytes = reader.ReadBytes(4);
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(dataLengthBytes);
+        var dataLength = BitConverter.ToUInt32(dataLengthBytes, 0);
+        
+        // Read data bytes
+        var data = reader.ReadBytes((int)dataLength);
+        
+        return (key, data);
+    }
+
     public async Task<bool> PutAsync(object key, object data)
     {
         var keyBytes = ToBytes(key);
@@ -125,13 +186,22 @@ public class PowerKv : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
+        // Hash the key with Keccak256
+        var keyHash = Hash256(key);
+        
+        // Pack the original key and data
+        var packedData = PackData(key, data);
+        
+        // Encrypt the packed data
+        var encryptedData = AES256.Encrypt(packedData, _secret);
+
         var url = _serverUrl + "/storeData";
         var payload = new StoreDataRequest
         {
             ProjectId = _projectId,
             Secret = _secret,
-            Key = ToHexString(key),
-            Value = ToHexString(data)
+            Key = ToHexString(keyHash),
+            Value = ToHexString(encryptedData)
         };
 
         var jsonContent = JsonConvert.SerializeObject(payload);
@@ -147,19 +217,7 @@ public class PowerKv : IDisposable
                 return true;
             }
 
-            // Parse error message
-            string message;
-            try
-            {
-                var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseText);
-                message = errorResponse?.Message ?? $"HTTP {(int)response.StatusCode}";
-            }
-            catch
-            {
-                message = $"HTTP {(int)response.StatusCode} — {responseText}";
-            }
-
-            throw new PowerKvException("ServerError", $"storeData failed: {message}");
+            throw new PowerKvException("ServerError", $"storeData failed: {(int)response.StatusCode} - {responseText}");
         }
         catch (HttpRequestException ex)
         {
@@ -181,7 +239,9 @@ public class PowerKv : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var keyHex = ToHexString(key);
+        // Hash the key with Keccak256
+        var keyHash = Hash256(key);
+        var keyHex = ToHexString(keyHash);
         var url = $"{_serverUrl}/getValue?projectId={HttpUtility.UrlEncode(_projectId)}&key={keyHex}";
 
         try
@@ -197,7 +257,22 @@ public class PowerKv : IDisposable
                     if (responseObj?.Value == null)
                         throw new PowerKvException("ServerError", $"Unexpected response shape from /getValue: {responseText}");
                     
-                    return FromHexString(responseObj.Value);
+                    var valueHex = responseObj.Value;
+                    
+                    // Handle both with/without 0x prefix
+                    var cleanHex = valueHex;
+                    if (cleanHex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        cleanHex = cleanHex[2..];
+                    
+                    var encryptedValue = FromHexString(cleanHex);
+                    
+                    // Decrypt the data
+                    var decryptedData = AES256.Decrypt(encryptedValue, _secret);
+                    
+                    // Unpack the data to get original key and data
+                    var (originalKey, actualData) = UnpackData(decryptedData);
+                    
+                    return actualData;
                 }
                 catch (JsonException ex)
                 {
@@ -283,4 +358,3 @@ public class PowerKv : IDisposable
         }
     }
 }
-
